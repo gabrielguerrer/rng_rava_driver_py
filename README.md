@@ -40,20 +40,24 @@ and retrieve their results without any conflict at the user's convenience.
 
 The thread/queue framework also benefits from being easily adaptable to an 
 asyncronous version, using asyncio queues and implementing data_get() as an 
-async function. The development of a RAVA_RNG_AIO class is a top priority on 
-the development roadmap.
+async function. The development of a RAVA_RNG_AIO class is a priority on the
+development roadmap.
 
 ## Installation
+
+The driver code is available as the 
+[rng_rava PyPI package](https://pypi.org/project/rng_rava/). To install it, run:
 
 ```
 pip install rng_rava
 ```
 
-Requires:
+Requirements:
  * pyserial
  * numpy
 
 ## Usage
+
 ```
 import rng_rava as rava
 
@@ -88,7 +92,8 @@ pc_a, pc_b = rng.get_rng_pulse_counts(n_counts=100)
 # Generate a random bit XORing both channels
 bit = rng.get_rng_bits(bit_type_id=rava.D_RNG_BIT_SRC['AB_XOR'])
 
-# Generate 100 random bytes en each channel without post-processing; Output as numpy array
+# Generate 100 random bytes en each channel without post-processing
+# Output as numpy array
 bytes_a, bytes_b = rng.get_rng_bytes(n_bytes=100,  
                     postproc_id=rava.D_RNG_POSTPROC['NONE'],  
                     out_type=rava.D_RNG_BYTE_OUT['NUMPY_ARRAY'])
