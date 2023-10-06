@@ -1,6 +1,7 @@
 # RAVA Python driver
 
-The rng_rava driver implements the python code for communicating with an 
+The [RAVA Python driver](https://github.com/gabrielguerrer/rng_rava_driver_py) 
+implements the code for communicating with an 
 [RAVA device](https://github.com/gabrielguerrer/rng_rava) running the 
 [RAVA Firmware](https://github.com/gabrielguerrer/rng_rava_firmware). 
 The computer running the driver assumes the role of the leader device, sending 
@@ -17,7 +18,7 @@ intensity of the attached LED. Users can also re-activate the LAMP mode and
 retrieve statistical information on its operation.
 
 The functions that provide access to RAVA's functionality are prefixed with 
-"set_" and "get_". "Set" commands are unidirectional and do not expect a device's
+"set" and "get". "Set" commands are unidirectional and do not expect a device's
 response. Conversely, "get" commands are bidirectional, where the driver 
 immediately attempts to retrieve the expected information after signaling the 
 device.
