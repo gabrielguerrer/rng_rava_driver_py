@@ -1,6 +1,10 @@
 # RAVA Python driver
 
-The rng_rava driver implements the code for communicating with an [RAVA device](https://github.com/gabrielguerrer/rng_rava) running the [RAVA Firmware](https://github.com/gabrielguerrer/rng_rava_firmware). The computer running the driver assumes the role of the leader device, sending command requests and reading the data replies.
+The rng_rava driver implements the python code for communicating with an 
+[RAVA device](https://github.com/gabrielguerrer/rng_rava) running the 
+[RAVA Firmware](https://github.com/gabrielguerrer/rng_rava_firmware). 
+The computer running the driver assumes the role of the leader device, sending 
+command requests and reading the data replies.
 
 The RAVA_RNG class enables the request of pulse counts, random bits, random 
 bytes, and random numbers (integers and floats). Additionally, it establishes 
@@ -61,7 +65,11 @@ rng = rava.RAVA_RNG()
 rng.open(serial_number=rava_sns[0])
 
 '''
-The default PWM and RNG configuration parameters are stored in the EEPROM memory and can be accessed with r.get_eeprom_pwm() and r.get_eeprom_rng(). If desired, users can modify the default values using the respective set_ functions. Additionally, it is possible to make non-permanent configuration changes using the following commands.
+The default PWM and RNG configuration parameters are stored in the EEPROM
+memory and can be accessed with r.get_eeprom_pwm() and r.get_eeprom_rng().
+If desired, users can modify the default values using the respective set_
+functions. Additionally, it is possible to make non-permanent configuration
+changes using the following commands.
 '''
 
 # Configure PWM
