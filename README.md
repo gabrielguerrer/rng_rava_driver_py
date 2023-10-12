@@ -1,8 +1,8 @@
-# RAVA Python driver
+# RAVA Python Driver
 
-The [RAVA Python driver](https://github.com/gabrielguerrer/rng_rava_driver_py) 
+The [RAVA Python Driver](https://github.com/gabrielguerrer/rng_rava_driver_py) 
 implements the code for communicating with an 
-[RAVA device](https://github.com/gabrielguerrer/rng_rava) running the 
+[RAVA Device](https://github.com/gabrielguerrer/rng_rava) running the 
 [RAVA Firmware](https://github.com/gabrielguerrer/rng_rava_firmware). 
 The computer running the driver assumes the role of the leader device, sending 
 command requests and reading the data replies.
@@ -96,8 +96,10 @@ doubles = rng.get_rng_doubles(n_doubles=100)
 
 - [RAVA Device](https://github.com/gabrielguerrer/rng_rava)
 - [RAVA Firmware](https://github.com/gabrielguerrer/rng_rava_firmware)
-- [RAVA Python Diagnostics Tool](https://github.com/gabrielguerrer/rng_rava_diagnostics_py)
+- RAVA Python Diagnostics Tool
 
 ## Contact
 
 gabrielguerrer [at] gmail [dot] com
+
+![RAVA logo](https://github.com/gabrielguerrer/rng_rava/blob/main/images/rng_rava_logo.png)
