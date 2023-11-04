@@ -12,7 +12,7 @@ import rng_rava as rava
 rngled = rava.RAVA_RNG_LED()
 dev_sns = rava.find_rava_sns()
 if len(dev_sns):
-    rngled.connect(serial_number=dev_sns[0])    
+    rngled.connect(serial_number=dev_sns[0])
 else:
     rava.lg.error('No device found')
     exit()
@@ -21,8 +21,8 @@ else:
 rngled.snd_led_color(color_hue=rava.D_LED_COLOR['BLUE'], intensity=0)
 
 # Fade to full intensity
-rngled.snd_led_intensity_fade(intensity_tgt=255, duration_ms=1000)
-time.sleep(2)
+rngled.snd_led_intensity_fade(intensity_tgt=255, duration_ms=2000)
+time.sleep(3)
 
 # Oscilate colors
 rngled.snd_led_color_oscillate(n_cycles=3, duration_ms=4000)

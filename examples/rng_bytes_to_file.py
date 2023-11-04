@@ -15,7 +15,7 @@ N_BYTES = 1000000 # 1MB
 rng = rava.RAVA_RNG()
 dev_sns = rava.find_rava_sns()
 if len(dev_sns):
-    rng.connect(serial_number=dev_sns[0])    
+    rng.connect(serial_number=dev_sns[0])
 else:
     rava.lg.error('No device found')
     exit()
@@ -24,11 +24,11 @@ else:
 with open(FILE_OUTPUT, mode='bw') as f:
 
     # Generate bytes
-    bytes_a, bytes_b = rng.get_rng_bytes(n_bytes=N_BYTES//2, 
+    bytes_a, bytes_b = rng.get_rng_bytes(n_bytes=N_BYTES//2,
                                     postproc_id=rava.D_RNG_POSTPROC['NONE'],
-                                    out_type=rava.D_RNG_BYTE_OUT['NUMPY_ARRAY'],
+                                    list_output=False,
                                     timeout=100)
-    
+
     # Write to file
     f.write(bytes_a)
     f.write(bytes_b)

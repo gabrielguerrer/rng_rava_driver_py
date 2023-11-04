@@ -4,15 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rng_rava"
-version = "1.0.0"
+version = "1.0.1"
 authors = [
   { name="Gabriel Guerrer", email="gabrielguerrer@gmail.com" },
 ]
 description = "Python driver for the RAVA RNG device"
 readme = "README.md"
 requires-python = ">=3.7"
-dependencies = [
-    "numpy", 
+dependencies = [    
     "pyserial" 
 ]
 classifiers = [
@@ -22,5 +21,4 @@ classifiers = [
 ]
 
 [project.urls]
-"Source" = "https://github.com/gabrielguerrer/rng_rava_driver_py"
-"Homepage" = "https://rava.cc"
+"Homepage" = "https://github.com/gabrielguerrer/rng_rava_driver_py"

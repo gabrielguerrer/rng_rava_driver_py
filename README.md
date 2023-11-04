@@ -34,8 +34,7 @@ pip install rng_rava
 ```
 
 Requirements:
- * [pyserial](https://github.com/pyserial/pyserial)
- * [numpy](https://github.com/numpy/numpy)
+ * [pyserial](https://github.com/pyserial/pyserial) 
 
 ## Usage
 
@@ -50,11 +49,11 @@ rng = rava.RAVA_RNG()
 rng.connect(serial_number=rava_sns[0])
 
 '''
-The default PWM and RNG configuration parameters are stored in the EEPROM memory  
-and can be accessed with rng.get_eeprom_pwm() and rng.get_eeprom_rng(). If 
-desired, users can modify the default values using the respective snd_ functions. 
-Additionally, it is possible to make non-permanent configuration changes using 
-the following commands:
+The default PWM and RNG configuration parameters are stored in the EEPROM memory
+and can be accessed with rng.get_eeprom_pwm() and rng.get_eeprom_rng(). If
+desired, users can modify the default values using the respective snd_
+functions. Additionally, it is possible to make non-permanent configuration
+changes using the following commands:
 '''
 
 # Configure PWM
@@ -71,25 +70,22 @@ Next, the generation of various random data types is demonstrated.
 pc_a, pc_b = rng.get_rng_pulse_counts(n_counts=100)
 
 # Generate a random bit XORing both channels
-bit = rng.get_rng_bits(bit_type_id=rava.D_RNG_BIT_SRC['AB_XOR'])
+bit = rng.get_rng_bits(bit_source_id=rava.D_RNG_BIT_SRC['AB_XOR'])
 
 # Generate 100 random bytes en each channel without post-processing
 # Output as numpy array
-bytes_a, bytes_b = rng.get_rng_bytes(n_bytes=100, 
-                                     postproc_id=rava.D_RNG_POSTPROC['NONE'], 
-                                     out_type=rava.D_RNG_BYTE_OUT['NUMPY_ARRAY']) 
+bytes_a, bytes_b = rng.get_rng_bytes(n_bytes=100,
+                                     postproc_id=rava.D_RNG_POSTPROC['NONE'],
+                                     list_output=True)
 
 # Generate 100 8-bit integers between 0 and 99
-ints8 = rng.get_rng_int8s(n_ints=100, int_max=100)
+ints8 = rng.get_rng_int8s(n_ints=100, int_delta=100)
 
-# Generate 100 16-bit integers between 0 and 999
-ints16 = rng.get_rng_int16s(n_ints=100, int_max=999)
+# Generate 100 16-bit integers between 0 and 9999
+ints16 = rng.get_rng_int16s(n_ints=100, int_delta=10000)
 
 # Generate 100 32-bit floats ranging between 0 and 1
 floats = rng.get_rng_floats(n_floats=100)
-
-# Generate 100 64-bit doubles ranging between 0 and 1
-doubles = rng.get_rng_doubles(n_doubles=100)
 ```
 
 ## Associated projects

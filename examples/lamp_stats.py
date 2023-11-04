@@ -52,37 +52,29 @@ def measure_lamp_statistics():
 
     # Print results
     print('\nLamp Statistics' 
-          '\nLasted {:.0f}h {:.0f}m {:.0f}s, yielding {} experiments'
-          .format(delta_t_h, delta_t_min, delta_t_s, exp_n),
+          '\nLasted {:.0f}h {:.0f}m {:.0f}s, yielding {} experiments'.format(delta_t_h, delta_t_min, delta_t_s, exp_n),
             
-            '\n  where {} ({:.2f}%) reached statistical significance'
-            .format(stats['exp_n_zsig'], 
-                                  stats['exp_n_zsig']/exp_n*100),
+            '\n  where {} ({:.2f}%) reached statistical significance'.format(stats['exp_n_zsig'], 
+                                                                             stats['exp_n_zsig']/exp_n*100),
                                   
             '\nMeaning one should expect to find:',
             
-            '\n  {:.2f} significant events per 1 min'
-            .format(stats['exp_n_zsig']/delta_t*60),
+            '\n  {:.2f} significant events per 1 min'.format(stats['exp_n_zsig']/delta_t*60),
                     
-            '\n  {:.2f} significant events per 5 min'
-            .format(stats['exp_n_zsig']/delta_t*300),
+            '\n  {:.2f} significant events per 5 min'.format(stats['exp_n_zsig']/delta_t*300),
             
-            '\n  {:.2f} significant events per 10 min'
-            .format(stats['exp_n_zsig']/delta_t*600),
+            '\n  {:.2f} significant events per 10 min'.format(stats['exp_n_zsig']/delta_t*600),
             
-            '\n  {:.2f} significant events per 30 min'
-            .format(stats['exp_n_zsig']/delta_t*1800),
+            '\n  {:.2f} significant events per 30 min'.format(stats['exp_n_zsig']/delta_t*1800),
             
-            '\n  {:.2f} significant events per 1 h'
-            .format(stats['exp_n_zsig']/delta_t*3600),
+            '\n  {:.2f} significant events per 1 h'.format(stats['exp_n_zsig']/delta_t*3600),
             
             '\nColor distribution (%):',
 
             '\n  R={:.2f} O={:.2f} Y={:.2f} G={:.2f}'
             '\n  C={:.2f} B={:.2f} PU={:.2f} PI={:.2f}'
-            .format(stats['red']/exp_n*100, stats['orange']/exp_n*100, 
-                    stats['yellow']/exp_n*100, stats['green']/exp_n*100, 
-                    stats['cyan']/exp_n*100, stats['blue']/exp_n*100, 
+            .format(stats['red']/exp_n*100, stats['orange']/exp_n*100, stats['yellow']/exp_n*100, 
+                    stats['green']/exp_n*100, stats['cyan']/exp_n*100, stats['blue']/exp_n*100, 
                     stats['purple']/exp_n*100, stats['pink']/exp_n*100))
     
 measure_lamp_statistics()

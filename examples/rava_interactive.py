@@ -1,8 +1,8 @@
 '''
-This file should be opened in an interactive Python environment. In VSCode, the 
-users can utilize the F6 shortcut to execute the initial code, establishing a 
-connection with the device. Next, users can navigate the code and execute each 
-line by positioning the cursor and pressing Shift + Enter. This approach 
+This file should be opened in an interactive Python environment. In VSCode, the
+users can utilize the F6 shortcut to execute the initial code, establishing a
+connection with the device. Next, users can navigate the code and execute each
+line by positioning the cursor and pressing Shift + Enter. This approach
 facilitates comprehensive testing of the RAVA's functionality.
 
 This example code is in the public domain.
@@ -27,19 +27,15 @@ else:
 def DEVICE():
 
     rng.connect(serial_number=rava_sns[0])
-
     rng.connected()
-
     rng.close()
 
     rng.get_device_serial_number()
-    
     rng.get_device_temperature()
-
     rng.get_device_free_ram()
 
     rng.snd_device_reboot()
-    
+
 
 def EEPROM():
 
@@ -47,7 +43,7 @@ def EEPROM():
 
     rng.get_eeprom_device()
     rng.snd_eeprom_device(temp_calib_slope=397, temp_calib_intercept=-280)
-    rng.snd_eeprom_device(temp_calib_slope=300, temp_calib_intercept=-200)
+    rng.snd_eeprom_device(temp_calib_slope=1, temp_calib_intercept=0)
 
     rng.get_eeprom_firmware()
 
@@ -64,8 +60,8 @@ def EEPROM():
     rng.snd_eeprom_rng(sampling_interval_us=15)
 
     rng.get_eeprom_led()
-    rng.snd_eeprom_led(led_attached=0)
-    rng.snd_eeprom_led(led_attached=1)
+    rng.snd_eeprom_led(led_attached=False)
+    rng.snd_eeprom_led(led_attached=True)
 
     rng.get_eeprom_lamp()
     rng.snd_eeprom_lamp(exp_dur_max_ms=5*60*1000, exp_z_significant=3.925, exp_mag_smooth_n_trials=20)
@@ -93,44 +89,37 @@ def RNG():
 
     rng.snd_rng_timing_debug_d1(on=True)
     rng.snd_rng_timing_debug_d1(on=False)
-    
-    rng.get_rng_pulse_counts(n_counts=100)
-    
-    rng.get_rng_bits(bit_type_id=rava.D_RNG_BIT_SRC['AB'])
-    rng.get_rng_bits(bit_type_id=rava.D_RNG_BIT_SRC['A'])
-    rng.get_rng_bits(bit_type_id=rava.D_RNG_BIT_SRC['B'])
-    rng.get_rng_bits(bit_type_id=rava.D_RNG_BIT_SRC['AB_XOR'])
-    rng.get_rng_bits(bit_type_id=rava.D_RNG_BIT_SRC['AB_RND'])
 
-    rng.get_rng_bytes(n_bytes=100, postproc_id=rava.D_RNG_POSTPROC['NONE'], out_type=rava.D_RNG_BYTE_OUT['NUMPY_ARRAY'])
-    rng.get_rng_bytes(n_bytes=100, postproc_id=rava.D_RNG_POSTPROC['XOR'], out_type=rava.D_RNG_BYTE_OUT['PY_LIST']) 
-    rng.get_rng_bytes(n_bytes=100, postproc_id=rava.D_RNG_POSTPROC['XOR_DICHTL'], out_type=rava.D_RNG_BYTE_OUT['PY_BYTES']) 
-    rng.get_rng_bytes(n_bytes=100, postproc_id=rava.D_RNG_POSTPROC['VON_NEUMANN'], out_type=rava.D_RNG_BYTE_OUT['NUMPY_ARRAY'])
+    rng.get_rng_pulse_counts(n_counts=15)
 
-    rng.get_rng_int8s(n_ints=100, int_max=99)
-    rng.get_rng_int16s(n_ints=100, int_max=999)
-    rng.get_rng_floats(n_floats=100)
-    rng.get_rng_doubles(n_doubles=100)
+    rng.get_rng_bits(bit_source_id=rava.D_RNG_BIT_SRC['AB'])
+    rng.get_rng_bits(bit_source_id=rava.D_RNG_BIT_SRC['A'])
+    rng.get_rng_bits(bit_source_id=rava.D_RNG_BIT_SRC['B'])
+    rng.get_rng_bits(bit_source_id=rava.D_RNG_BIT_SRC['AB_XOR'])
+    rng.get_rng_bits(bit_source_id=rava.D_RNG_BIT_SRC['AB_RND'])
+
+    rng.get_rng_bytes(n_bytes=15, postproc_id=rava.D_RNG_POSTPROC['NONE'], list_output=True)
+    rng.get_rng_bytes(n_bytes=15, postproc_id=rava.D_RNG_POSTPROC['XOR'], list_output=True)
+    rng.get_rng_bytes(n_bytes=15, postproc_id=rava.D_RNG_POSTPROC['XOR_DICHTL'], list_output=True)
+    rng.get_rng_bytes(n_bytes=15, postproc_id=rava.D_RNG_POSTPROC['VON_NEUMANN'], list_output=True)
+
+    rng.get_rng_int8s(n_ints=15, int_delta=10)
+    rng.get_rng_int8s(n_ints=15, int_delta=100)
+    rng.get_rng_int16s(n_ints=15, int_delta=1000)
+    rng.get_rng_floats(n_floats=15)
 
     rng.get_rng_byte_stream_status()
-
-    rng.snd_rng_byte_stream_start(n_bytes=1, stream_delay_ms=50, postproc_id=rava.D_RNG_POSTPROC['NONE'])    
-    rng.snd_rng_byte_stream_start(n_bytes=10000, stream_delay_ms=0, postproc_id=rava.D_RNG_POSTPROC['NONE'])   
-
-    rng.get_rng_byte_stream_data(out_type=rava.D_RNG_BYTE_OUT['PY_BYTES'])
-    rng.get_rng_byte_stream_data(out_type=rava.D_RNG_BYTE_OUT['NUMPY_ARRAY'])
-
+    rng.snd_rng_byte_stream_start(n_bytes=10, stream_interval_ms=200, postproc_id=rava.D_RNG_POSTPROC['NONE'])
+    rng.get_rng_byte_stream_data(list_output=True)
     rng.snd_rng_byte_stream_stop()
 
 
 def HEALTH():
 
     rng.snd_health_startup_run()
-
     rng.get_health_startup_results()
-
     rava.print_health_startup_results(*rng.get_health_startup_results())
-    
+
     rng.get_health_continuous_errors()
 
 
@@ -177,8 +166,8 @@ def PERIPHERALS():
     rng.snd_periph_d1_trigger_input(on=True)
     rng.snd_periph_d1_trigger_input(on=False)
 
-    rng.snd_periph_d1_comparator(neg_to_adc12=False)
-    rng.snd_periph_d1_comparator(neg_to_adc12=True)
+    rng.snd_periph_d1_comparator(neg_to_d5=False)
+    rng.snd_periph_d1_comparator(neg_to_d5=True)
     rng.snd_periph_d1_comparator(on=False)
 
     rng.snd_periph_digi_mode(periph_id=1, mode_id=rava.D_PERIPH_MODES['OUTPUT'])
@@ -187,13 +176,13 @@ def PERIPHERALS():
     rng.snd_periph_d1_delay_us_test(delay_us=10)
 
     # Running with an unconnected D2 may flood the driver with random signaling
-    rng.snd_periph_d2_input_capture(on=True) 
+    rng.snd_periph_d2_input_capture(on=True)
     rng.snd_periph_d2_input_capture(on=False)
-    rng.get_periph_d2_input_capture() 
+    rng.get_periph_d2_input_capture()
 
-    rng.snd_periph_d3_timer3_trigger_output(delay_ms=1)
-    rng.snd_periph_d3_timer3_trigger_output(delay_ms=10)
-    rng.snd_periph_d3_timer3_trigger_output(delay_ms=100)
+    rng.snd_periph_d3_timer3_trigger_output(interval_ms=1)
+    rng.snd_periph_d3_timer3_trigger_output(interval_ms=10)
+    rng.snd_periph_d3_timer3_trigger_output(interval_ms=100)
     rng.snd_periph_d3_timer3_trigger_output(on=False)
 
     rng.snd_periph_d3_timer3_pwm(freq_prescaler=1, top=2**16-1, duty=1000)
@@ -202,15 +191,15 @@ def PERIPHERALS():
     rng.snd_periph_d3_timer3_pwm(on=False)
 
     rng.snd_periph_d4_pin_change(on=True)
-    rng.snd_periph_d4_pin_change(on=False)        
+    rng.snd_periph_d4_pin_change(on=False)
 
-    rng.get_periph_d5_adc_read(ref_5v=0, clk_prescaler=1, oversampling_n_bits=0)
     rng.get_periph_d5_adc_read(ref_5v=0, clk_prescaler=6, oversampling_n_bits=0)
+    rng.get_periph_d5_adc_read(ref_5v=1, clk_prescaler=6, oversampling_n_bits=0)
     rng.get_periph_d5_adc_read(ref_5v=0, clk_prescaler=6, oversampling_n_bits=6)
-    rng.get_periph_d5_adc_read(on=False)
+    rng.get_periph_d5_adc_read(ref_5v=1, clk_prescaler=6, oversampling_n_bits=6)
 
 
-def INTERFACES():    
+def INTERFACES():
 
     rng.get_interface_ds18bs0()
 
@@ -255,6 +244,7 @@ def LAMP():
     rng.snd_lamp_mode(on=False)
 
     rng.snd_lamp_debug(on=True)
+    rng.get_lamp_debug()
     rng.snd_lamp_debug(on=False)
 
     rng.get_lamp_statistics()

@@ -8,51 +8,37 @@ Distributed under the MIT license - See LICENSE for details
 Definitions and variables used by the RAVA modules.
 """
 
-import logging
-
-#####################
-## LOGGING
-
-# RAVA_LOG_LEVEL = logging.DEBUG
-RAVA_LOG_LEVEL = logging.INFO
-
-LOG_FILL = 14 * ' '
-
-logging.basicConfig(level=RAVA_LOG_LEVEL, 
-                    format='%(asctime)s %(levelname)s %(message)s', 
-                    datefmt='%H:%M:%S')
-
-lg = logging.getLogger(__name__)
-
-
-#####################
-# DEFINITIONS
+# RAVA_LOG_LEVEL = 10 # logging.DEBUG
+RAVA_LOG_LEVEL = 20 # logging.INFO
+LOG_FILL = 17 * ' '
 
 RAVA_USB_VID = 0x1209 # https://pid.codes
-RAVA_USB_PID = 0x4884 
+RAVA_USB_PID = 0x4884
 
 COMM_MSG_START = b'$'
 
 COMM_MSG_LEN = 8
 
+PERIPH_PORTS = 5
+
 GET_TIMEOUT_S = 3.
 
-SERIAL_LISTEN_LOOP_DELAY_S = 0.02 # 20 ms, 50 Hz readings
+SERIAL_LISTEN_LOOP_INTERVAL_S = 0.02 # 20 ms, 50 Hz readings
 
-RNG_BYTE_STREAM_MAX_DELAY_MS = 4194 
+RNG_BYTE_STREAM_MAX_INTERVAL_MS = 4194
 
 D_DEV_COMM = {
     'DEVICE_SERIAL_NUMBER':1,
     'DEVICE_TEMPERATURE':2,
     'DEVICE_FREE_RAM':3,
-    'DEVICE_REBOOT':4, 
+    'DEVICE_REBOOT':4,
     'DEVICE_DEBUG':5,
 
     'EEPROM_RESET_TO_DEFAULT':10,
     'EEPROM_DEVICE':11,
     'EEPROM_FIRMWARE':12,
     'EEPROM_PWM':13,
-    'EEPROM_RNG':14,    
+    'EEPROM_RNG':14,
     'EEPROM_LED':15,
     'EEPROM_LAMP':16,
 
@@ -63,14 +49,15 @@ D_DEV_COMM = {
     'RNG_BITS':42,
     'RNG_BYTES':43,
     'RNG_TIMING_DEBUG_D1':44,
-    
+
     'RNG_INT8S':50,
     'RNG_INT16S':51,
+    'RNG_FLOATS':52,
 
     'RNG_STREAM_START':60,
     'RNG_STREAM_STOP':61,
     'RNG_STREAM_BYTES':62,
-    'RNG_STREAM_STATUS':63,    
+    'RNG_STREAM_STATUS':63,
 
     'HEALTH_STARTUP_RUN':70,
     'HEALTH_STARTUP_RESULTS':71,
@@ -87,7 +74,7 @@ D_DEV_COMM = {
     'LAMP_MODE':90,
     'LAMP_STATISTICS':91,
     'LAMP_DEBUG':92,
-    
+
     'PERIPH_MODE':100,
     'PERIPH_READ':101,
     'PERIPH_WRITE':102,
@@ -124,13 +111,6 @@ D_RNG_BIT_SRC = {
 }
 D_RNG_BIT_SRC_INV = {v: k for k, v in D_RNG_BIT_SRC.items()}
 
-D_RNG_BYTE_OUT = {
-    'PY_BYTES':1,
-    'PY_LIST':2,
-    'NUMPY_ARRAY':3,
-}
-D_RNG_BYTE_OUT_INV = {v: k for k, v in D_RNG_BYTE_OUT.items()}
-
 D_RNG_POSTPROC = {
     'NONE':0,
     'XOR':1,
@@ -141,7 +121,7 @@ D_RNG_POSTPROC_INV = {v: k for k, v in D_RNG_POSTPROC.items()}
 
 D_PERIPH_MODES = {
     'INPUT':0,
-    'OUTPUT':1 
+    'OUTPUT':1
 }
 D_PERIPH_MODES_INV = {v: k for k, v in D_PERIPH_MODES.items()}
 
