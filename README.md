@@ -91,12 +91,6 @@ ints16 = rng.get_rng_int16s(n_ints=100, int_delta=10000)
 floats = rng.get_rng_floats(n_floats=100)
 ```
 
-## GUI Applications
-
-Aditionaly, this package contains the tk submodule
-
-<a href="https://github.com/gabrielguerrer/rng_rava_driver_py/blob/main/images/control_panel.png"><img src="https://github.com/gabrielguerrer/rng_rava_driver_py/blob/main/images/control_panel.png" width="700"></a>
-
 ## Firmware Compatibility
 
 Regarding the [RAVA Firmware](https://github.com/gabrielguerrer/rng_rava_firmware): 
