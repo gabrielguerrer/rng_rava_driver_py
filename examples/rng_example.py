@@ -39,16 +39,16 @@ pc_a, pc_b = rng.get_rng_pulse_counts(n_counts=100)
 bit = rng.get_rng_bits(bit_source_id=rava.D_RNG_BIT_SRC['AB_XOR'])
 
 # Generate 100 random bytes en each channel without post-processing
-# Output as numpy array
+# Output as list, instead of bytestring
 bytes_a, bytes_b = rng.get_rng_bytes(n_bytes=100,
                                      postproc_id=rava.D_RNG_POSTPROC['NONE'],
                                      list_output=True)
 
 # Generate 100 8-bit integers between 0 and 99
-ints8 = rng.get_rng_int8s(n_ints=100, int_delta=100)
+ints8 = rng.get_rng_int8s(n_ints=100, int_delta=99)
 
 # Generate 100 16-bit integers between 0 and 9999
-ints16 = rng.get_rng_int16s(n_ints=100, int_delta=10000)
+ints16 = rng.get_rng_int16s(n_ints=100, int_delta=9999)
 
 # Generate 100 32-bit floats ranging between 0 and 1
 floats = rng.get_rng_floats(n_floats=100)

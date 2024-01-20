@@ -12,8 +12,8 @@ Author: Gabriel Guerrer
 import rng_rava as rava
 
 # Set logging level
-rava.lg.setLevel(10) # DEBUG
-# rava.lg.setLevel(20) # INFO
+# rava.lg.setLevel(10) # DEBUG
+rava.lg.setLevel(20) # INFO
 
 # Find RAVA device and connect
 rava_sns = rava.find_rava_sns()
@@ -90,7 +90,7 @@ def RNG():
     rng.snd_rng_timing_debug_d1(on=True)
     rng.snd_rng_timing_debug_d1(on=False)
 
-    rng.get_rng_pulse_counts(n_counts=15)
+    rng.get_rng_pulse_counts(n_counts=15, list_output=True)
 
     rng.get_rng_bits(bit_source_id=rava.D_RNG_BIT_SRC['AB'])
     rng.get_rng_bits(bit_source_id=rava.D_RNG_BIT_SRC['A'])
@@ -244,7 +244,7 @@ def LAMP():
     rng.snd_lamp_mode(on=False)
 
     rng.snd_lamp_debug(on=True)
-    rng.get_lamp_debug()
+    rng.get_lamp_debug_data()
     rng.snd_lamp_debug(on=False)
 
     rng.get_lamp_statistics()

@@ -18,12 +18,24 @@ from rng_rava.rava_defs import *
 from rng_rava.rava_rng import *
 
 
+### RAVA_RNG_LED
+
 class RAVA_RNG_LED(RAVA_RNG):
 
     def __init__(self):
-        super().__init__(dev_name='RAVA_RNG_LED')
+        super().__init__(dev_name='RAVA_LED')
 
-        self.cbkfcn_lamp_debug = None
+        # Variables defined upon connection
+        self.led_attached = None
+
+        # Variables
+        self.led_color = None
+        self.led_intensity = None
+        self.lamp_mode = None
+        self.lamp_debug = None
+
+        # Callback functions
+        self.cbkfcn_lamp_debug = lambda: None
 
 
     def connect(self, serial_number):
@@ -31,17 +43,20 @@ class RAVA_RNG_LED(RAVA_RNG):
             return False
 
         # LED firmware enabled?
-        if not self.dev_firmware_dict['led_enabled']:
+        if not self.led_enabled:
             lg.warning('{} Connect: LED code is disabled in the firmware'.format(self.dev_name))
 
         # LED attached?
-        if not self.get_led_attached():
+        self.led_attached = self.get_eeprom_led()['led_attached']
+        if not self.led_attached:
             lg.warning('{} Connect: Firmware claims no LED is attached.'
                        '\n{}  If false, fix it with snd_eeprom_led(led_attached=True)'
                        .format(self.dev_name, LOG_FILL))
 
         return True
 
+
+    ## SERIAL
 
     def process_serial_comm(self, comm_id, comm_data):
         super().process_serial_comm(comm_id=comm_id, comm_data=comm_data)
@@ -65,26 +80,28 @@ class RAVA_RNG_LED(RAVA_RNG):
         elif comm_id == D_DEV_COMM['LAMP_STATISTICS']:
             exp_n, exp_n_zsig, n_extra_bytes = self.unpack_rava_msgdata(comm_data, 'HHB')
             exp_colors_bytes = self.read_serial(n_extra_bytes)
-            exp_colors = struct.unpack('<HHHHHHHH', exp_colors_bytes)
+            if exp_colors_bytes is None:     
+                exp_colors = 8*[0]
+            else:
+                exp_colors = struct.unpack('<HHHHHHHH', exp_colors_bytes)
             self.put_queue_data('LAMP_STATISTICS', (exp_n, exp_n_zsig, *exp_colors))
 
 
-    #####################
     ## CALLBACK REGISTER
 
     def cbkreg_lamp_debug(self, fcn_lamp_debug):
         if callable(fcn_lamp_debug):
             self.cbkfcn_lamp_debug = fcn_lamp_debug
+            lg.debug('{} Callback: Registering Lamp Debug function to {}'
+                    .format(self.dev_name, fcn_lamp_debug.__name__))
+        elif fcn_lamp_debug is None:
+            self.cbkfcn_lamp_debug = lambda: None
+            lg.debug('{} Callback: Unregistering Lamp Debug function'.format(self.dev_name))
         else:
             lg.error('{} Callback: Provide fcn_lamp_debug as a function'.format(self.dev_name))
 
 
-    #####################
     ## LED
-
-    def get_led_attached(self):
-        return self.get_eeprom_led()['led_attached']
-
 
     def snd_led_color(self, color_hue, intensity=255):
         if color_hue >= 2**8:
@@ -94,6 +111,8 @@ class RAVA_RNG_LED(RAVA_RNG):
             lg.error('{} LED Color: Provide intensity as a 8-bit integer'.format(self.dev_name))
             return None
 
+        self.led_color = color_hue
+        self.led_intensity = intensity
         comm = 'LED_COLOR'
         return self.snd_rava_msg(comm, [color_hue, intensity], 'BB')
 
@@ -101,11 +120,18 @@ class RAVA_RNG_LED(RAVA_RNG):
     def snd_led_color_fade(self, color_hue_tgt, duration_ms):
         if color_hue_tgt >= 2**8:
             lg.error('{} LED Color: Provide color_hue_tgt as a 8-bit integer'.format(self.dev_name))
-            return None
+            return None        
         if duration_ms >= 2**16:
             lg.error('{} LED Color: Provide duration_ms as a 16-bit integer'.format(self.dev_name))
             return None
+        
+        if duration_ms == 0:
+            lg.error('{} LED Color: Provide duration_ms > 0'.format(self.dev_name))
+            return None
+        if color_hue_tgt - self.led_color == 0:
+            return None
 
+        self.led_color = color_hue_tgt
         comm = 'LED_COLOR_FADE'
         return self.snd_rava_msg(comm, [color_hue_tgt, duration_ms], 'BH')
 
@@ -117,6 +143,13 @@ class RAVA_RNG_LED(RAVA_RNG):
         if duration_ms >= 2**16:
             lg.error('{} LED Color: Provide duration_ms as a 16-bit integer'.format(self.dev_name))
             return None
+        
+        if n_cycles == 0:
+            lg.error('{} LED Color: Provide n_cycles > 0'.format(self.dev_name))
+            return None
+        if duration_ms == 0:
+            lg.error('{} LED Color: Provide duration_ms > 0'.format(self.dev_name))
+            return None
 
         comm = 'LED_COLOR_OSCILLATE'
         return self.snd_rava_msg(comm, [n_cycles, duration_ms], 'BH')
@@ -127,6 +160,7 @@ class RAVA_RNG_LED(RAVA_RNG):
             lg.error('{} LED Intensity: Provide intensity as a 8-bit integer'.format(self.dev_name))
             return None
 
+        self.led_intensity = intensity
         comm = 'LED_INTENSITY'
         return self.snd_rava_msg(comm, [intensity], 'B')
 
@@ -138,7 +172,14 @@ class RAVA_RNG_LED(RAVA_RNG):
         if duration_ms >= 2**16:
             lg.error('{} LED Intensity: Provide duration_ms as a 16-bit integer'.format(self.dev_name))
             return None
+        
+        if duration_ms == 0:
+            lg.error('{} LED Intensity: Provide duration_ms > 0'.format(self.dev_name))
+            return None
+        if intensity_tgt - self.led_intensity == 0:
+            return None
 
+        self.led_intensity = intensity_tgt
         comm = 'LED_INTENSITY_FADE'
         return self.snd_rava_msg(comm, [intensity_tgt, duration_ms], 'BH')
 
@@ -160,10 +201,11 @@ class RAVA_RNG_LED(RAVA_RNG):
                     'color_fading':color_fading, 'intensity_fading':intensity_fading}
 
 
-    #####################
     ## LAMP
 
     def snd_lamp_mode(self, on=True):
+        self.lamp_mode = on
+
         comm = 'LAMP_MODE'
         return self.snd_rava_msg(comm, [on], 'B')
 
@@ -179,11 +221,12 @@ class RAVA_RNG_LED(RAVA_RNG):
 
 
     def snd_lamp_debug(self, on=True):
+        self.lamp_debug = on
         comm = 'LAMP_DEBUG'
         return self.snd_rava_msg(comm, [on], 'B')
 
 
-    def get_lamp_debug(self, timeout=GET_TIMEOUT_S):
+    def get_lamp_debug_data(self, timeout=GET_TIMEOUT_S):
         comm = 'LAMP_DEBUG'
         data_vars = self.get_queue_data(comm, timeout=timeout)
 

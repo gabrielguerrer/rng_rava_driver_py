@@ -4,8 +4,11 @@ The [RAVA Python Driver](https://github.com/gabrielguerrer/rng_rava_driver_py)
 implements the code for communicating with an 
 [RAVA Device](https://github.com/gabrielguerrer/rng_rava) running the 
 [RAVA Firmware](https://github.com/gabrielguerrer/rng_rava_firmware). 
-The computer running the driver assumes the role of the leader device, sending 
-command requests and reading the data replies.
+
+The firmware establishes a USB CDC communication protocol with the computer 
+host. Both Linux and Windows are equipped with generic drivers for CDC, 
+eliminating the need for any specific driver software. This package implements
+the serial commands used to control the RAVA device.
 
 The RAVA_RNG class enables the request of pulse counts, random bits, random 
 bytes, and random numbers (integers and floats). Additionally, it establishes 
@@ -33,8 +36,8 @@ The driver code is available as the
 pip install rng_rava
 ```
 
-Requirements:
- * [pyserial](https://github.com/pyserial/pyserial) 
+Requirements: [pyserial](https://github.com/pyserial/pyserial) 
+
 
 ## Usage
 
@@ -73,7 +76,7 @@ pc_a, pc_b = rng.get_rng_pulse_counts(n_counts=100)
 bit = rng.get_rng_bits(bit_source_id=rava.D_RNG_BIT_SRC['AB_XOR'])
 
 # Generate 100 random bytes en each channel without post-processing
-# Output as numpy array
+# Output as list, instead of bytestring
 bytes_a, bytes_b = rng.get_rng_bytes(n_bytes=100,
                                      postproc_id=rava.D_RNG_POSTPROC['NONE'],
                                      list_output=True)
@@ -88,11 +91,18 @@ ints16 = rng.get_rng_int16s(n_ints=100, int_delta=10000)
 floats = rng.get_rng_floats(n_floats=100)
 ```
 
+## Firmware Compatibility
+
+Regarding the [RAVA Firmware](https://github.com/gabrielguerrer/rng_rava_firmware): 
+* Firmware v1.0 is compatible with driver versions from v1.0.0 to latest
+
+
 ## Associated projects
 
 - [RAVA Device](https://github.com/gabrielguerrer/rng_rava)
 - [RAVA Firmware](https://github.com/gabrielguerrer/rng_rava_firmware)
-- RAVA Python Diagnostics Tool
+- [RAVA Python Diagnostics](https://github.com/gabrielguerrer/rng_rava_diagnostics_py)
+
 
 ## Contact
 

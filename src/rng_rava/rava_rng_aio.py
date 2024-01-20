@@ -15,10 +15,12 @@ from rng_rava.rava_defs import *
 from rng_rava.rava_rng import *
 
 
+### RAVA_RNG_AIO
+
 class RAVA_RNG_AIO(RAVA_RNG):
 
     def __init__(self):
-        super().__init__(dev_name='RAVA_RNG_AIO')
+        super().__init__(dev_name='RAVA_AIO')
         self.queue_type = asyncio.Queue
 
         # Variables
@@ -50,6 +52,11 @@ class RAVA_RNG_AIO(RAVA_RNG):
 
         # Request firmware info
         self.dev_firmware_dict = await self.get_eeprom_firmware()
+        self.health_startup_enabled = self.dev_firmware_dict['health_startup_enabled']
+        self.health_continuous_enabled = self.dev_firmware_dict['health_continuous_enabled']
+        self.led_enabled = self.dev_firmware_dict['led_enabled']
+        self.lamp_enabled = self.dev_firmware_dict['lamp_enabled']
+        self.peripherals_enabled = self.dev_firmware_dict['peripherals_enabled']
 
         # Print connection info
         lg.info('{} Connect: Success'
@@ -58,19 +65,21 @@ class RAVA_RNG_AIO(RAVA_RNG):
                         self.dev_usb_name, self.dev_firmware_dict['version'], self.dev_serial_number, self.serial.port))
 
         # Request Health startup info
-        if self.dev_firmware_dict['health_startup_enabled']:
-            test_success, test_vars = await self.get_health_startup_results()
+        if self.health_startup_enabled:
+            self.health_startup_success, test_vars = await self.get_health_startup_results()
 
             # Print test info
-            print_health_startup_results(test_success, test_vars)
+            print_health_startup_results(self.health_startup_success, test_vars)
 
-            # Error? Users have then a limited command variety (see Firmware)
-            if not test_success:
+            # Error? Users have then a limited command variety (see Firmware code)
+            if not self.health_startup_success:
                 lg.error('{} Connect: Startup tests failed'.format(self.dev_name))
                 return False
 
         return True
 
+
+    ## QUEUE
 
     def put_queue_data(self, comm, value, comm_ext_id=0):
         # Check key
@@ -118,52 +127,68 @@ class RAVA_RNG_AIO(RAVA_RNG):
         return await self.serial_data[comm_ext].get()
 
 
+    ## SERIAL
+
     async def loop_serial_listen(self):
-        try:
-            # Debug
-            lg.debug('> {} SERIAL LISTEN LOOP'.format(self.dev_name))
+        # Debug
+        lg.debug('> {} LOOP SERIAL LISTEN'.format(self.dev_name))
 
-            # Loop while connected
-            while self.serial_connected.is_set():
+        # Loop while connected
+        while self.serial_connected.is_set():
 
-                # Command available?
-                if self.inwaiting_serial():
+            # Command available?
+            comm_inwaiting = self.inwaiting_serial()
+            if comm_inwaiting is None:
+                continue # Disconnected
 
-                    # Starts with $?
-                    if self.read_serial(1) == COMM_MSG_START:
-                        comm_msg = self.read_serial(COMM_MSG_LEN-1)
-                        comm_id = comm_msg[0]
-                        comm_data = comm_msg[1:]
+            if comm_inwaiting > 0:
 
-                        # Known command id?
-                        if comm_id in D_DEV_COMM_INV:
-                            # Debug
-                            lg.debug('> COMM RCV {}'.format([D_DEV_COMM_INV[comm_id], *[c for c in comm_data]]))
+                # Read command starting char
+                comm_start = self.read_serial(1)
+                if comm_start is None:
+                    continue # Disconnected
+                
+                # Starts with $?
+                if comm_start == COMM_MSG_START:      
 
-                            # Process Command
+                    # Read remaining command bytes
+                    comm_msg = self.read_serial(COMM_MSG_LEN-1)
+                    if comm_msg is None:
+                        continue # Disconnected
+
+                    comm_id = comm_msg[0]
+                    comm_data = comm_msg[1:]
+
+                    # Known command id?
+                    if comm_id in D_DEV_COMM_INV:     
+                                                
+                        # Debug
+                        lg.debug('> COMM RCV {}'.format([D_DEV_COMM_INV[comm_id], *[c for c in comm_data]]))
+
+                        # Process Command
+                        try:
                             self.process_serial_comm(comm_id, comm_data)
 
-                        else:
-                            lg.warning('{} Serial Listen Loop: Unknown command_id {}'.format(self.dev_name, comm_id))
+                        except Exception as err:
+                            lg.error('{} Serial Listen Loop: Error processing command_id {}'
+                                        '\n{}  {} - {}'
+                                        .format(self.dev_name, comm_id, LOG_FILL, type(err).__name__, err))
+
+                            # Close device
+                            self.close()
 
                     else:
-                        lg.warning('{} Serial Listen Loop: Commands must start with {}'.format(self.dev_name, COMM_MSG_START))
+                        lg.warning('{} Serial Listen Loop: Unknown command_id {}'.format(self.dev_name, comm_id))
 
-                # The non-blocking method is prefered for finishing the thread
-                # when closing the device
                 else:
-                    await asyncio.sleep(SERIAL_LISTEN_LOOP_INTERVAL_S)
+                    lg.warning('{} Serial Listen Loop: Commands must start with {}'.format(self.dev_name, COMM_MSG_START))
 
-        except Exception as err:
-            lg.error('{} Serial Listen Loop: Error'
-                     '\n{}  {} - {}'
-                     .format(self.dev_name, LOG_FILL, type(err).__name__, err))
-
-            # Close device
-            self.close()
+            # The non-blocking method is prefered for finishing the thread
+            # when closing the device
+            else:
+                await asyncio.sleep(SERIAL_LISTEN_LOOP_INTERVAL_S) 
 
 
-    #####################
     ## DEVICE
 
     async def get_device_serial_number(self):
@@ -178,14 +203,11 @@ class RAVA_RNG_AIO(RAVA_RNG):
             return await self.get_queue_data(comm)
 
 
-    async def get_device_free_ram(self):
         comm = 'DEVICE_FREE_RAM'
         if self.snd_rava_msg(comm):
             return await self.get_queue_data(comm)
 
 
-
-    #####################
     ## EEPROM
 
     async def get_eeprom_device(self):
@@ -252,7 +274,6 @@ class RAVA_RNG_AIO(RAVA_RNG):
             return dict(zip(data_names, data_vars))
 
 
-    #####################
     ## PWM
 
     async def get_pwm_setup(self):
@@ -263,7 +284,6 @@ class RAVA_RNG_AIO(RAVA_RNG):
             return {'freq_id':freq_id, 'freq_str':D_PWM_FREQ_INV[freq_id], 'duty':duty}
 
 
-    #####################
     ## RNG
 
     async def get_rng_setup(self):
@@ -275,8 +295,15 @@ class RAVA_RNG_AIO(RAVA_RNG):
 
 
     async def get_rng_pulse_counts(self, n_counts):
+        if n_counts == 0:
+            lg.error('{} RNG PC: Provide n_counts > 0'.format(self.dev_name))
+            return None, None
+        if n_counts >= 2**16:
+            lg.error('{} RNG PC: Provide n_counts as a 16-bit integer'.format(self.dev_name))
+            return None, None
+
         comm = 'RNG_PULSE_COUNTS'
-        if self.snd_rava_msg(comm, [n_counts], 'L'):
+        if self.snd_rava_msg(comm, [n_counts], 'H'):
             counts_bytes_a, counts_bytes_b = await self.get_queue_data(comm)
 
             counts_a = bytes_to_numlist(counts_bytes_a, 'B')
@@ -303,12 +330,18 @@ class RAVA_RNG_AIO(RAVA_RNG):
 
 
     async def get_rng_bytes(self, n_bytes, postproc_id=D_RNG_POSTPROC['NONE'], request_id=0, list_output=True):
+        if n_bytes == 0:
+            lg.error('{} RNG Bytes: Provide n_bytes > 0'.format(self.dev_name))
+            return None, None
+        if n_bytes >= 2**16:
+            lg.error('{} RNG Bytes: Provide n_bytes as a 16-bit integer'.format(self.dev_name))
+            return None, None
         if postproc_id not in D_RNG_POSTPROC_INV:
             lg.error('{} RNG Bytes: Unknown postproc_id {}'.format(self.dev_name, postproc_id))
-            return None
+            return None, None
 
         comm = 'RNG_BYTES'
-        if self.snd_rava_msg(comm, [n_bytes, postproc_id, request_id], 'LBB'):
+        if self.snd_rava_msg(comm, [n_bytes, postproc_id, request_id], 'HBB'):
             bytes_data = await self.get_queue_data(comm, comm_ext_id=request_id)
 
             if bytes_data is not None:
@@ -326,8 +359,11 @@ class RAVA_RNG_AIO(RAVA_RNG):
 
 
     async def get_rng_int8s(self, n_ints, int_delta):
-        if n_ints >= 2**32:
-            lg.error('{} RNG Ints: Provide n_ints as a 32-bit integer'.format(self.dev_name))
+        if n_ints == 0:
+            lg.error('{} RNG Ints: Provide n_ints > 0'.format(self.dev_name))
+            return None
+        if n_ints >= 2**16:
+            lg.error('{} RNG Ints: Provide n_ints as a 16-bit integer'.format(self.dev_name))
             return None
         if int_delta >= 2**8:
             lg.error('{} RNG Ints: Provide int_delta as a 8-bit integer'.format(self.dev_name))
@@ -337,14 +373,17 @@ class RAVA_RNG_AIO(RAVA_RNG):
             return None
 
         comm = 'RNG_INT8S'
-        if self.snd_rava_msg(comm, [n_ints, int_delta], 'LB'):
+        if self.snd_rava_msg(comm, [n_ints, int_delta], 'HB'):
             ints_bytes = await self.get_queue_data(comm)
             return bytes_to_numlist(ints_bytes, 'B')
 
 
     async def get_rng_int16s(self, n_ints, int_delta):
-        if n_ints >= 2**32:
-            lg.error('{} RNG Ints: Provide n_ints as a 32-bit integer'.format(self.dev_name))
+        if n_ints == 0:
+            lg.error('{} RNG Ints: Provide n_ints > 0'.format(self.dev_name))
+            return None
+        if n_ints >= 2**16:
+            lg.error('{} RNG Ints: Provide n_ints as a 16-bit integer'.format(self.dev_name))
             return None
         if int_delta >= 2**16:
             lg.error('{} RNG Ints: Provide int_delta as a 16-bit integer'.format(self.dev_name))
@@ -354,18 +393,21 @@ class RAVA_RNG_AIO(RAVA_RNG):
             return None
 
         comm = 'RNG_INT16S'
-        if self.snd_rava_msg(comm, [n_ints, int_delta], 'LH'):
+        if self.snd_rava_msg(comm, [n_ints, int_delta], 'HH'):
             ints_bytes = await self.get_queue_data(comm)
             return bytes_to_numlist(ints_bytes, 'H')
 
 
     async def get_rng_floats(self, n_floats):
-        if n_floats >= 2**32:
-            lg.error('{} RNG Floats: Provide n_floats as a 32-bit integer'.format(self.dev_name))
+        if n_floats == 0:
+            lg.error('{} RNG Floats: Provide n_floats > 0'.format(self.dev_name))
+            return None
+        if n_floats >= 2**16:
+            lg.error('{} RNG Floats: Provide n_floats as a 16-bit integer'.format(self.dev_name))
             return None
 
         comm = 'RNG_FLOATS'
-        if self.snd_rava_msg(comm, [n_floats], 'L'):
+        if self.snd_rava_msg(comm, [n_floats], 'H'):
             ints_bytes = await self.get_queue_data(comm)
             return bytes_to_numlist(ints_bytes, 'f')
 
@@ -399,7 +441,6 @@ class RAVA_RNG_AIO(RAVA_RNG):
             return await self.get_queue_data(comm)
 
 
-    #####################
     ## HEALTH
 
     async def get_health_startup_results(self):
@@ -421,7 +462,6 @@ class RAVA_RNG_AIO(RAVA_RNG):
             return n_errors, dict(zip(data_names, data_vars))
 
 
-    #####################
     ## PERIPHERALS
 
     async def get_periph_digi_state(self, periph_id=1):
@@ -454,7 +494,6 @@ class RAVA_RNG_AIO(RAVA_RNG):
                 return await self.get_queue_data(comm)
 
 
-    #####################
     ## INTERFACES
 
     async def get_interface_ds18bs0(self):
