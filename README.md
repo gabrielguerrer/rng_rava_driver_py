@@ -121,7 +121,9 @@ sub-applications are easily accessible through the main application's menu and
 central buttons.
 
 
-**Control Panel**
+## Sub-Applications
+
+### Control Panel
 
 The Control Panel sub-application provides an GUI interface for testing the 
 features implemented by the RAVA driver, including EEPROM, PWM, RNG, HEALTH, 
@@ -137,7 +139,7 @@ python3 -m rng_rava.tk.ctrlp
 </a>
 
 
-**Acquisition**
+### Acquisition
 
 The Acquisition sub-app features a GUI interface for utilizing the 
 RAVA_ACQUISITION class to generate files containing pulse counts, random bytes, 
@@ -151,6 +153,7 @@ python3 -m rng_rava.tk.acq
 <a href="https://github.com/gabrielguerrer/rng_rava_driver_py/blob/main/images/tk_acquisition.png">
 <img src="https://github.com/gabrielguerrer/rng_rava_driver_py/blob/main/images/tk_acquisition.png" width="800">
 </a>
+
 
 ## Firmware Compatibility
 
