@@ -157,7 +157,7 @@ python3 -m rng_rava.tk.acq
 ## Firmware Compatibility
 
 Regarding the [RAVA Firmware](https://github.com/gabrielguerrer/rng_rava_firmware): 
-* Firmware v1.0 to latest is compatible with driver versions v1.1.0 to latest
+* Firmware v1.0.0 to latest is compatible with driver v1.1.0 to latest
 
 
 ## Associated projects
