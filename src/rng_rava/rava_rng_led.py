@@ -14,9 +14,10 @@ For more information on how LED and LAMP modules operate, refer to the firmware
 documentation.
 """
 
-from rng_rava.rava_defs import *
-from rng_rava.rava_rng import *
+import struct
 
+from rng_rava.rava_rng import RAVA_RNG
+from rng_rava.rava_defs import *
 
 ### RAVA_RNG_LED
 
@@ -44,14 +45,14 @@ class RAVA_RNG_LED(RAVA_RNG):
 
         # LED firmware enabled?
         if not self.led_enabled:
-            lg.warning('{} Connect: LED code is disabled in the firmware'.format(self.dev_name))
+            self.lg.warning('{} Connect: LED code is disabled in the firmware'.format(self.dev_name))
 
         # LED attached?
         self.led_attached = self.get_eeprom_led()['led_attached']
         if not self.led_attached:
-            lg.warning('{} Connect: Firmware claims no LED is attached.'
-                       '\n{}  If false, fix it with snd_eeprom_led(led_attached=True)'
-                       .format(self.dev_name, LOG_FILL))
+            self.lg.warning('{} Connect: Firmware claims no LED is attached.'
+                           '\n{}  If false, fix it with snd_eeprom_led(led_attached=True)'
+                           .format(self.dev_name, LOG_FILL))
 
         return True
 
@@ -80,7 +81,7 @@ class RAVA_RNG_LED(RAVA_RNG):
         elif comm_id == D_DEV_COMM['LAMP_STATISTICS']:
             exp_n, exp_n_zsig, n_extra_bytes = self.unpack_rava_msgdata(comm_data, 'HHB')
             exp_colors_bytes = self.read_serial(n_extra_bytes)
-            if exp_colors_bytes is None:     
+            if exp_colors_bytes is None:
                 exp_colors = 8*[0]
             else:
                 exp_colors = struct.unpack('<HHHHHHHH', exp_colors_bytes)
@@ -92,23 +93,23 @@ class RAVA_RNG_LED(RAVA_RNG):
     def cbkreg_lamp_debug(self, fcn_lamp_debug):
         if callable(fcn_lamp_debug):
             self.cbkfcn_lamp_debug = fcn_lamp_debug
-            lg.debug('{} Callback: Registering Lamp Debug function to {}'
-                    .format(self.dev_name, fcn_lamp_debug.__name__))
+            self.lg.debug('{} Callback: Registering Lamp Debug function to {}'
+                          .format(self.dev_name, fcn_lamp_debug.__name__))
         elif fcn_lamp_debug is None:
             self.cbkfcn_lamp_debug = lambda: None
-            lg.debug('{} Callback: Unregistering Lamp Debug function'.format(self.dev_name))
+            self.lg.debug('{} Callback: Unregistering Lamp Debug function'.format(self.dev_name))
         else:
-            lg.error('{} Callback: Provide fcn_lamp_debug as a function'.format(self.dev_name))
+            self.lg.error('{} Callback: Provide fcn_lamp_debug as a function'.format(self.dev_name))
 
 
     ## LED
 
     def snd_led_color(self, color_hue, intensity=255):
         if color_hue >= 2**8:
-            lg.error('{} LED Color: Provide color_hue as a 8-bit integer'.format(self.dev_name))
+            self.lg.error('{} LED Color: Provide color_hue as a 8-bit integer'.format(self.dev_name))
             return None
         if intensity >= 2**8:
-            lg.error('{} LED Color: Provide intensity as a 8-bit integer'.format(self.dev_name))
+            self.lg.error('{} LED Color: Provide intensity as a 8-bit integer'.format(self.dev_name))
             return None
 
         self.led_color = color_hue
@@ -119,14 +120,14 @@ class RAVA_RNG_LED(RAVA_RNG):
 
     def snd_led_color_fade(self, color_hue_tgt, duration_ms):
         if color_hue_tgt >= 2**8:
-            lg.error('{} LED Color: Provide color_hue_tgt as a 8-bit integer'.format(self.dev_name))
-            return None        
-        if duration_ms >= 2**16:
-            lg.error('{} LED Color: Provide duration_ms as a 16-bit integer'.format(self.dev_name))
+            self.lg.error('{} LED Color: Provide color_hue_tgt as a 8-bit integer'.format(self.dev_name))
             return None
-        
+        if duration_ms >= 2**16:
+            self.lg.error('{} LED Color: Provide duration_ms as a 16-bit integer'.format(self.dev_name))
+            return None
+
         if duration_ms == 0:
-            lg.error('{} LED Color: Provide duration_ms > 0'.format(self.dev_name))
+            self.lg.error('{} LED Color: Provide duration_ms > 0'.format(self.dev_name))
             return None
         if color_hue_tgt - self.led_color == 0:
             return None
@@ -138,17 +139,17 @@ class RAVA_RNG_LED(RAVA_RNG):
 
     def snd_led_color_oscillate(self, n_cycles, duration_ms):
         if n_cycles >= 2**8:
-            lg.error('{} LED Color: Provide n_cycles as a 8-bit integer'.format(self.dev_name))
+            self.lg.error('{} LED Color: Provide n_cycles as a 8-bit integer'.format(self.dev_name))
             return None
         if duration_ms >= 2**16:
-            lg.error('{} LED Color: Provide duration_ms as a 16-bit integer'.format(self.dev_name))
+            self.lg.error('{} LED Color: Provide duration_ms as a 16-bit integer'.format(self.dev_name))
             return None
-        
+
         if n_cycles == 0:
-            lg.error('{} LED Color: Provide n_cycles > 0'.format(self.dev_name))
+            self.lg.error('{} LED Color: Provide n_cycles > 0'.format(self.dev_name))
             return None
         if duration_ms == 0:
-            lg.error('{} LED Color: Provide duration_ms > 0'.format(self.dev_name))
+            self.lg.error('{} LED Color: Provide duration_ms > 0'.format(self.dev_name))
             return None
 
         comm = 'LED_COLOR_OSCILLATE'
@@ -157,7 +158,7 @@ class RAVA_RNG_LED(RAVA_RNG):
 
     def snd_led_intensity(self, intensity):
         if intensity >= 2**8:
-            lg.error('{} LED Intensity: Provide intensity as a 8-bit integer'.format(self.dev_name))
+            self.lg.error('{} LED Intensity: Provide intensity as a 8-bit integer'.format(self.dev_name))
             return None
 
         self.led_intensity = intensity
@@ -167,14 +168,14 @@ class RAVA_RNG_LED(RAVA_RNG):
 
     def snd_led_intensity_fade(self, intensity_tgt, duration_ms):
         if intensity_tgt >= 2**8:
-            lg.error('{} LED Intensity: Provide intensity_tgt as a 8-bit integer'.format(self.dev_name))
+            self.lg.error('{} LED Intensity: Provide intensity_tgt as a 8-bit integer'.format(self.dev_name))
             return None
         if duration_ms >= 2**16:
-            lg.error('{} LED Intensity: Provide duration_ms as a 16-bit integer'.format(self.dev_name))
+            self.lg.error('{} LED Intensity: Provide duration_ms as a 16-bit integer'.format(self.dev_name))
             return None
-        
+
         if duration_ms == 0:
-            lg.error('{} LED Intensity: Provide duration_ms > 0'.format(self.dev_name))
+            self.lg.error('{} LED Intensity: Provide duration_ms > 0'.format(self.dev_name))
             return None
         if intensity_tgt - self.led_intensity == 0:
             return None

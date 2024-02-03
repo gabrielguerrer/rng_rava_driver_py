@@ -8,9 +8,7 @@ Distributed under the MIT license - See LICENSE for details
 Definitions and variables used by the RAVA modules.
 """
 
-# RAVA_LOG_LEVEL = 10 # logging.DEBUG
-RAVA_LOG_LEVEL = 20 # logging.INFO
-LOG_FILL = 17 * ' '
+FIRMWARE_MIN_VERSION = "1.0.0"
 
 RAVA_USB_VID = 0x1209 # https://pid.codes
 RAVA_USB_PID = 0x4884
@@ -23,6 +21,8 @@ RNG_BYTE_STREAM_MAX_INTERVAL_MS = 4194
 GET_TIMEOUT_S = 3.
 
 PERIPH_PORTS = 5
+
+LOG_FILL = 17 * ' '
 
 D_DEV_COMM = {
     'DEVICE_SERIAL_NUMBER':1,

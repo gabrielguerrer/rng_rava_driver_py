@@ -39,10 +39,8 @@ pc_a, pc_b = rng.get_rng_pulse_counts(n_counts=100)
 bit = rng.get_rng_bits(bit_source_id=rava.D_RNG_BIT_SRC['AB_XOR'])
 
 # Generate 100 random bytes en each channel without post-processing
-# Output as list, instead of bytestring
 bytes_a, bytes_b = rng.get_rng_bytes(n_bytes=100,
-                                     postproc_id=rava.D_RNG_POSTPROC['NONE'],
-                                     list_output=True)
+                                     postproc_id=rava.D_RNG_POSTPROC['NONE'])
 
 # Generate 100 8-bit integers between 0 and 99
 ints8 = rng.get_rng_int8s(n_ints=100, int_delta=99)

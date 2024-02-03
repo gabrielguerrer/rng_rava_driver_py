@@ -10,9 +10,11 @@ asynchronous framework.
 """
 
 import asyncio
+import numpy as np
 
+from rng_rava.rava_rng import RAVA_RNG
+from rng_rava.rava_rng import find_rava_port, version_a_greater_b, print_health_startup_results, bytes_to_list, bytes_to_array
 from rng_rava.rava_defs import *
-from rng_rava.rava_rng import *
 
 
 ### RAVA_RNG_AIO
@@ -29,12 +31,12 @@ class RAVA_RNG_AIO(RAVA_RNG):
 
     async def connect(self, serial_number):
         # Debug
-        lg.debug('> {} CONNECT'.format(self.dev_name))
+        self.lg.debug('> {} CONNECT'.format(self.dev_name))
 
         # Find serial port
         port = find_rava_port(serial_number)
         if port is None:
-            lg.error('{} Connect: No device found with SN {}'.format(self.dev_name, serial_number))
+            self.lg.error('{} Connect: No device found with SN {}'.format(self.dev_name, serial_number))
             return False
 
         # Open serial connection
@@ -51,18 +53,25 @@ class RAVA_RNG_AIO(RAVA_RNG):
         self.snd_rng_byte_stream_stop()
 
         # Request firmware info
-        self.dev_firmware_dict = await self.get_eeprom_firmware()
-        self.health_startup_enabled = self.dev_firmware_dict['health_startup_enabled']
-        self.health_continuous_enabled = self.dev_firmware_dict['health_continuous_enabled']
-        self.led_enabled = self.dev_firmware_dict['led_enabled']
-        self.lamp_enabled = self.dev_firmware_dict['lamp_enabled']
-        self.peripherals_enabled = self.dev_firmware_dict['peripherals_enabled']
+        self.firmware_dict = await self.get_eeprom_firmware()
+        self.firmware_version =  self.firmware_dict['version']
+        self.health_startup_enabled = self.firmware_dict['health_startup_enabled']
+        self.health_continuous_enabled = self.firmware_dict['health_continuous_enabled']
+        self.led_enabled = self.firmware_dict['led_enabled']
+        self.lamp_enabled = self.firmware_dict['lamp_enabled']
+        self.peripherals_enabled = self.firmware_dict['peripherals_enabled']
+
+        # Check Firmware version
+        if version_a_greater_b(FIRMWARE_MIN_VERSION, self.firmware_version):
+            self.lg.error('{} Connect: Firmware version v{} is incompatible with the driver'
+                          .format(self.dev_name, self.firmware_version))
+            return False
 
         # Print connection info
-        lg.info('{} Connect: Success'
+        self.lg.info('{} Connect: Success'
                 '\n{}  {}, Firmware v{}, SN={}, at {}'
                 .format(self.dev_name, LOG_FILL,
-                        self.dev_usb_name, self.dev_firmware_dict['version'], self.dev_serial_number, self.serial.port))
+                        self.dev_usb_name, self.firmware_version, self.dev_serial_number, self.serial.port))
 
         # Request Health startup info
         if self.health_startup_enabled:
@@ -73,7 +82,7 @@ class RAVA_RNG_AIO(RAVA_RNG):
 
             # Error? Users have then a limited command variety (see Firmware code)
             if not self.health_startup_success:
-                lg.error('{} Connect: Startup tests failed'.format(self.dev_name))
+                self.lg.error('{} Connect: Startup tests failed'.format(self.dev_name))
                 return False
 
         return True
@@ -84,7 +93,7 @@ class RAVA_RNG_AIO(RAVA_RNG):
     def put_queue_data(self, comm, value, comm_ext_id=0):
         # Check key
         if comm not in self.serial_data:
-            lg.error('{} Data: Unknown comm {}'.format(self.dev_name, comm))
+            self.lg.error('{} Data: Unknown comm {}'.format(self.dev_name, comm))
             return False
 
         # Extended key
@@ -103,14 +112,14 @@ class RAVA_RNG_AIO(RAVA_RNG):
             return True
 
         except asyncio.QueueFull:
-            lg.error('{} Data: {} Queue full'.format(self.dev_name, comm_ext))
+            self.lg.error('{} Data: {} Queue full'.format(self.dev_name, comm_ext))
             return False
 
 
     async def get_queue_data(self, comm, comm_ext_id=0):
         # Check key
         if comm not in self.serial_data:
-            lg.error('{} Data: Unknown comm {}'.format(self.dev_name, comm))
+            self.lg.error('{} Data: Unknown comm {}'.format(self.dev_name, comm))
             return None
 
         # Extended key
@@ -131,7 +140,7 @@ class RAVA_RNG_AIO(RAVA_RNG):
 
     async def loop_serial_listen(self):
         # Debug
-        lg.debug('> {} LOOP SERIAL LISTEN'.format(self.dev_name))
+        self.lg.debug('> {} LOOP SERIAL LISTEN'.format(self.dev_name))
 
         # Loop while connected
         while self.serial_connected.is_set():
@@ -147,9 +156,9 @@ class RAVA_RNG_AIO(RAVA_RNG):
                 comm_start = self.read_serial(1)
                 if comm_start is None:
                     continue # Disconnected
-                
+
                 # Starts with $?
-                if comm_start == COMM_MSG_START:      
+                if comm_start == COMM_MSG_START:
 
                     # Read remaining command bytes
                     comm_msg = self.read_serial(COMM_MSG_LEN-1)
@@ -160,17 +169,17 @@ class RAVA_RNG_AIO(RAVA_RNG):
                     comm_data = comm_msg[1:]
 
                     # Known command id?
-                    if comm_id in D_DEV_COMM_INV:     
-                                                
+                    if comm_id in D_DEV_COMM_INV:
+
                         # Debug
-                        lg.debug('> COMM RCV {}'.format([D_DEV_COMM_INV[comm_id], *[c for c in comm_data]]))
+                        self.lg.debug('> COMM RCV {}'.format([D_DEV_COMM_INV[comm_id], *[c for c in comm_data]]))
 
                         # Process Command
                         try:
                             self.process_serial_comm(comm_id, comm_data)
 
                         except Exception as err:
-                            lg.error('{} Serial Listen Loop: Error processing command_id {}'
+                            self.lg.error('{} Serial Listen Loop: Error processing command_id {}'
                                         '\n{}  {} - {}'
                                         .format(self.dev_name, comm_id, LOG_FILL, type(err).__name__, err))
 
@@ -178,15 +187,15 @@ class RAVA_RNG_AIO(RAVA_RNG):
                             self.close()
 
                     else:
-                        lg.warning('{} Serial Listen Loop: Unknown command_id {}'.format(self.dev_name, comm_id))
+                        self.lg.warning('{} Serial Listen Loop: Unknown command_id {}'.format(self.dev_name, comm_id))
 
                 else:
-                    lg.warning('{} Serial Listen Loop: Commands must start with {}'.format(self.dev_name, COMM_MSG_START))
+                    self.lg.warning('{} Serial Listen Loop: Commands must start with {}'.format(self.dev_name, COMM_MSG_START))
 
             # The non-blocking method is prefered for finishing the thread
             # when closing the device
             else:
-                await asyncio.sleep(SERIAL_LISTEN_LOOP_INTERVAL_S) 
+                await asyncio.sleep(SERIAL_LISTEN_LOOP_INTERVAL_S)
 
 
     ## DEVICE
@@ -294,26 +303,39 @@ class RAVA_RNG_AIO(RAVA_RNG):
             return {'sampling_interval_us':sampling_interval_us}
 
 
-    async def get_rng_pulse_counts(self, n_counts):
+    async def get_rng_pulse_counts(self, n_counts, output_type='array'):
         if n_counts == 0:
-            lg.error('{} RNG PC: Provide n_counts > 0'.format(self.dev_name))
+            self.lg.error('{} RNG PC: Provide n_counts > 0'.format(self.dev_name))
             return None, None
         if n_counts >= 2**16:
-            lg.error('{} RNG PC: Provide n_counts as a 16-bit integer'.format(self.dev_name))
+            self.lg.error('{} RNG PC: Provide n_counts as a 16-bit integer'.format(self.dev_name))
             return None, None
 
         comm = 'RNG_PULSE_COUNTS'
         if self.snd_rava_msg(comm, [n_counts], 'H'):
             counts_bytes_a, counts_bytes_b = await self.get_queue_data(comm)
 
-            counts_a = bytes_to_numlist(counts_bytes_a, 'B')
-            counts_b = bytes_to_numlist(counts_bytes_b, 'B')
-            return counts_a, counts_b
+            if (counts_bytes_a is None) or (counts_bytes_a is None):
+                return None, None
+
+            else:
+                if output_type == 'list':
+                    counts_a = bytes_to_list(counts_bytes_a, 'B')
+                    counts_b = bytes_to_list(counts_bytes_b, 'B')
+                    return counts_a, counts_b
+
+                elif output_type == 'array':
+                    counts_a = bytes_to_array(counts_bytes_a, np.uint8)
+                    counts_b = bytes_to_array(counts_bytes_b, np.uint8)
+                    return counts_a, counts_b
+
+                else:
+                    return counts_bytes_a, counts_bytes_b
 
 
     async def get_rng_bits(self, bit_source_id):
         if bit_source_id not in D_RNG_BIT_SRC_INV:
-            lg.error('{} RNG Bits: Unknown bit_source_id {}'.format(self.dev_name, bit_source_id))
+            self.lg.error('{} RNG Bits: Unknown bit_source_id {}'.format(self.dev_name, bit_source_id))
             return None
 
         comm = 'RNG_BITS'
@@ -329,110 +351,135 @@ class RAVA_RNG_AIO(RAVA_RNG):
                 return bits[0]
 
 
-    async def get_rng_bytes(self, n_bytes, postproc_id=D_RNG_POSTPROC['NONE'], request_id=0, list_output=True):
+    async def get_rng_bytes(self, n_bytes, postproc_id=D_RNG_POSTPROC['NONE'], request_id=0, output_type='array'):
         if n_bytes == 0:
-            lg.error('{} RNG Bytes: Provide n_bytes > 0'.format(self.dev_name))
+            self.lg.error('{} RNG Bytes: Provide n_bytes > 0'.format(self.dev_name))
             return None, None
         if n_bytes >= 2**16:
-            lg.error('{} RNG Bytes: Provide n_bytes as a 16-bit integer'.format(self.dev_name))
+            self.lg.error('{} RNG Bytes: Provide n_bytes as a 16-bit integer'.format(self.dev_name))
             return None, None
         if postproc_id not in D_RNG_POSTPROC_INV:
-            lg.error('{} RNG Bytes: Unknown postproc_id {}'.format(self.dev_name, postproc_id))
+            self.lg.error('{} RNG Bytes: Unknown postproc_id {}'.format(self.dev_name, postproc_id))
             return None, None
 
         comm = 'RNG_BYTES'
         if self.snd_rava_msg(comm, [n_bytes, postproc_id, request_id], 'HBB'):
-            bytes_data = await self.get_queue_data(comm, comm_ext_id=request_id)
+            rng_bytes_a, rng_bytes_b = await self.get_queue_data(comm, comm_ext_id=request_id)
 
-            if bytes_data is not None:
-                rng_bytes_a, rng_bytes_b = bytes_data
+            if (rng_bytes_a is None) or (rng_bytes_b is None):
+                return None, None
 
-                if list_output:
-                    rng_a = bytes_to_numlist(rng_bytes_a, 'B')
-                    rng_b = bytes_to_numlist(rng_bytes_b, 'B')
+            else:
+                if output_type == 'list':
+                    rng_a = bytes_to_list(rng_bytes_a, 'B')
+                    rng_b = bytes_to_list(rng_bytes_b, 'B')
                     return rng_a, rng_b
+
+                elif output_type == 'array':
+                    rng_a = bytes_to_array(rng_bytes_a, np.uint8)
+                    rng_b = bytes_to_array(rng_bytes_b, np.uint8)
+                    return rng_a, rng_b
+
                 else:
                     return rng_bytes_a, rng_bytes_b
 
-            else:
-                return None, None
 
-
-    async def get_rng_int8s(self, n_ints, int_delta):
+    async def get_rng_int8s(self, n_ints, int_delta, output_type='array'):
         if n_ints == 0:
-            lg.error('{} RNG Ints: Provide n_ints > 0'.format(self.dev_name))
+            self.lg.error('{} RNG Ints: Provide n_ints > 0'.format(self.dev_name))
             return None
         if n_ints >= 2**16:
-            lg.error('{} RNG Ints: Provide n_ints as a 16-bit integer'.format(self.dev_name))
+            self.lg.error('{} RNG Ints: Provide n_ints as a 16-bit integer'.format(self.dev_name))
             return None
         if int_delta >= 2**8:
-            lg.error('{} RNG Ints: Provide int_delta as a 8-bit integer'.format(self.dev_name))
+            self.lg.error('{} RNG Ints: Provide int_delta as a 8-bit integer'.format(self.dev_name))
             return None
-        if int_delta < 2:
-            lg.error('{} RNG Ints: Provide int_delta > 1'.format(self.dev_name))
+        if int_delta == 0:
+            self.lg.error('{} RNG Ints: Provide int_delta > 0'.format(self.dev_name))
             return None
 
         comm = 'RNG_INT8S'
         if self.snd_rava_msg(comm, [n_ints, int_delta], 'HB'):
             ints_bytes = await self.get_queue_data(comm)
-            return bytes_to_numlist(ints_bytes, 'B')
+            if ints_bytes is None:
+                return None
+            else:
+                if output_type == 'list':
+                    return bytes_to_list(ints_bytes, 'B')
+                else:
+                    return bytes_to_array(ints_bytes, np.uint8)
 
 
-    async def get_rng_int16s(self, n_ints, int_delta):
+    async def get_rng_int16s(self, n_ints, int_delta, output_type='array'):
         if n_ints == 0:
-            lg.error('{} RNG Ints: Provide n_ints > 0'.format(self.dev_name))
+            self.lg.error('{} RNG Ints: Provide n_ints > 0'.format(self.dev_name))
             return None
         if n_ints >= 2**16:
-            lg.error('{} RNG Ints: Provide n_ints as a 16-bit integer'.format(self.dev_name))
+            self.lg.error('{} RNG Ints: Provide n_ints as a 16-bit integer'.format(self.dev_name))
             return None
         if int_delta >= 2**16:
-            lg.error('{} RNG Ints: Provide int_delta as a 16-bit integer'.format(self.dev_name))
+            self.lg.error('{} RNG Ints: Provide int_delta as a 16-bit integer'.format(self.dev_name))
             return None
-        if int_delta < 2:
-            lg.error('{} RNG Ints: Provide int_delta > 1'.format(self.dev_name))
+        if int_delta == 0:
+            self.lg.error('{} RNG Ints: Provide int_delta > 0'.format(self.dev_name))
             return None
 
         comm = 'RNG_INT16S'
         if self.snd_rava_msg(comm, [n_ints, int_delta], 'HH'):
             ints_bytes = await self.get_queue_data(comm)
-            return bytes_to_numlist(ints_bytes, 'H')
+            if ints_bytes is None:
+                return None
+            else:
+                if output_type == 'list':
+                    return bytes_to_list(ints_bytes, 'H')
+                else:
+                    return bytes_to_array(ints_bytes, np.uint16)
 
 
-    async def get_rng_floats(self, n_floats):
+    async def get_rng_floats(self, n_floats, output_type='array'):
         if n_floats == 0:
-            lg.error('{} RNG Floats: Provide n_floats > 0'.format(self.dev_name))
+            self.lg.error('{} RNG Floats: Provide n_floats > 0'.format(self.dev_name))
             return None
         if n_floats >= 2**16:
-            lg.error('{} RNG Floats: Provide n_floats as a 16-bit integer'.format(self.dev_name))
+            self.lg.error('{} RNG Floats: Provide n_floats as a 16-bit integer'.format(self.dev_name))
             return None
 
         comm = 'RNG_FLOATS'
         if self.snd_rava_msg(comm, [n_floats], 'H'):
             ints_bytes = await self.get_queue_data(comm)
-            return bytes_to_numlist(ints_bytes, 'f')
+            if ints_bytes is None:
+                return None
+            else:
+                if output_type == 'list':
+                    return bytes_to_list(ints_bytes, 'f')
+                else:
+                    return bytes_to_array(ints_bytes, np.float32)
 
 
-    async def get_rng_byte_stream_data(self, list_output=True):
+    async def get_rng_byte_stream_data(self, output_type='array'):
         if not self.rng_streaming:
-            lg.warning('{} RNG Stream: Streaming is disabled'.format(self.dev_name))
+            self.lg.warning('{} RNG Stream: Streaming is disabled'.format(self.dev_name))
             return None, None
 
         comm = 'RNG_STREAM_BYTES'
-        bytes_data = await self.get_queue_data(comm)
+        rng_bytes_a, rng_bytes_b = await self.get_queue_data(comm)
 
-        # Timeout?
-        if bytes_data is not None:
-            rng_bytes_a, rng_bytes_b = bytes_data
-
-            if list_output:
-                rng_a = bytes_to_numlist(rng_bytes_a, 'B')
-                rng_b = bytes_to_numlist(rng_bytes_b, 'B')
-                return rng_a, rng_b
-            else:
-                return rng_bytes_a, rng_bytes_b
+        if (rng_bytes_a is None) or (rng_bytes_b is None):
+            return None, None
 
         else:
-            return None, None
+            if output_type == 'list':
+                rng_a = bytes_to_list(rng_bytes_a, 'B')
+                rng_b = bytes_to_list(rng_bytes_b, 'B')
+                return rng_a, rng_b
+
+            elif output_type == 'array':
+                    rng_a = bytes_to_array(rng_bytes_a, np.uint8)
+                    rng_b = bytes_to_array(rng_bytes_a, np.uint8)
+                    return rng_a, rng_b
+
+            else:
+                return rng_bytes_a, rng_bytes_b
 
 
     async def get_rng_byte_stream_status(self):
@@ -466,7 +513,7 @@ class RAVA_RNG_AIO(RAVA_RNG):
 
     async def get_periph_digi_state(self, periph_id=1):
         if periph_id == 0 or periph_id > 5:
-            lg.error('{} Periph: Provide a periph_id between 1 and 5'.format(self.dev_name))
+            self.lg.error('{} Periph: Provide a periph_id between 1 and 5'.format(self.dev_name))
             return None
 
         comm = 'PERIPH_READ'
@@ -482,10 +529,10 @@ class RAVA_RNG_AIO(RAVA_RNG):
 
     async def get_periph_d5_adc_read(self, ref_5v=1, clk_prescaler=0, oversampling_n_bits=0, on=True):
         if clk_prescaler == 0 or clk_prescaler > 7:
-            lg.error('{} Periph D5: Provide a clk_prescaler between 1 and 7'.format(self.dev_name))
+            self.lg.error('{} Periph D5: Provide a clk_prescaler between 1 and 7'.format(self.dev_name))
             return None
         if oversampling_n_bits > 6:
-            lg.error('{} Periph D5: Provide a oversampling_n_bits <= 6'.format(self.dev_name))
+            self.lg.error('{} Periph D5: Provide a oversampling_n_bits <= 6'.format(self.dev_name))
             return None
 
         comm = 'PERIPH_D5_ADC'

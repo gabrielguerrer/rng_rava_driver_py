@@ -14,7 +14,7 @@ dev_sns = rava.find_rava_sns()
 if len(dev_sns):
     rngled.connect(serial_number=dev_sns[0])
 else:
-    rava.lg.error('No device found')
+    print('No device found')
     exit()
 
 # Set color as blue (intensity=0)

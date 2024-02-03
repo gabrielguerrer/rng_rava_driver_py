@@ -13,7 +13,7 @@ dev_sns = rava.find_rava_sns()
 if len(dev_sns):
     rng.connect(serial_number=dev_sns[0])
 else:
-    rava.lg.error('No device found')
+    print('No device found')
     exit()
 
 # Generate 3 bytes every 0.5s
@@ -22,7 +22,7 @@ rng.snd_rng_byte_stream_start(n_bytes=5, stream_interval_ms=500)
 # Print 10 first values
 print()
 for i in range(10):
-    rnd_a, rnd_b = rng.get_rng_byte_stream_data(list_output=True)
+    rnd_a, rnd_b = rng.get_rng_byte_stream_data(output_type='list')
     print('RNG A, B = {}, {}'.format(rnd_a, rnd_b))
 
 # Stop stream

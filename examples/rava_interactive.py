@@ -11,17 +11,16 @@ Author: Gabriel Guerrer
 
 import rng_rava as rava
 
-# Set logging level
-# rava.lg.setLevel(10) # DEBUG
-rava.lg.setLevel(20) # INFO
+# Create RAVA instance and set logging level to INFO
+rng = rava.RAVA_RNG_LED()
+rng.log_level('INFO')
 
 # Find RAVA device and connect
 rava_sns = rava.find_rava_sns()
-rng = rava.RAVA_RNG_LED()
 if len(rava_sns):
     rng.connect(serial_number=rava_sns[0])
 else:
-    rava.lg.error('No device found')
+    print('No device found')
 
 
 def DEVICE():
@@ -90,7 +89,7 @@ def RNG():
     rng.snd_rng_timing_debug_d1(on=True)
     rng.snd_rng_timing_debug_d1(on=False)
 
-    rng.get_rng_pulse_counts(n_counts=15, list_output=True)
+    rng.get_rng_pulse_counts(n_counts=15, output_type='list')
 
     rng.get_rng_bits(bit_source_id=rava.D_RNG_BIT_SRC['AB'])
     rng.get_rng_bits(bit_source_id=rava.D_RNG_BIT_SRC['A'])
@@ -98,10 +97,10 @@ def RNG():
     rng.get_rng_bits(bit_source_id=rava.D_RNG_BIT_SRC['AB_XOR'])
     rng.get_rng_bits(bit_source_id=rava.D_RNG_BIT_SRC['AB_RND'])
 
-    rng.get_rng_bytes(n_bytes=15, postproc_id=rava.D_RNG_POSTPROC['NONE'], list_output=True)
-    rng.get_rng_bytes(n_bytes=15, postproc_id=rava.D_RNG_POSTPROC['XOR'], list_output=True)
-    rng.get_rng_bytes(n_bytes=15, postproc_id=rava.D_RNG_POSTPROC['XOR_DICHTL'], list_output=True)
-    rng.get_rng_bytes(n_bytes=15, postproc_id=rava.D_RNG_POSTPROC['VON_NEUMANN'], list_output=True)
+    rng.get_rng_bytes(n_bytes=15, postproc_id=rava.D_RNG_POSTPROC['NONE'], output_type='array')
+    rng.get_rng_bytes(n_bytes=15, postproc_id=rava.D_RNG_POSTPROC['XOR'], output_type='array')
+    rng.get_rng_bytes(n_bytes=15, postproc_id=rava.D_RNG_POSTPROC['XOR_DICHTL'], output_type='array')
+    rng.get_rng_bytes(n_bytes=15, postproc_id=rava.D_RNG_POSTPROC['VON_NEUMANN'], output_type='array')
 
     rng.get_rng_int8s(n_ints=15, int_delta=10)
     rng.get_rng_int8s(n_ints=15, int_delta=100)
@@ -110,7 +109,7 @@ def RNG():
 
     rng.get_rng_byte_stream_status()
     rng.snd_rng_byte_stream_start(n_bytes=10, stream_interval_ms=200, postproc_id=rava.D_RNG_POSTPROC['NONE'])
-    rng.get_rng_byte_stream_data(list_output=True)
+    rng.get_rng_byte_stream_data(output_type='array')
     rng.snd_rng_byte_stream_stop()
 
 

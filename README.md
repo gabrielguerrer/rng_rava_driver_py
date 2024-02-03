@@ -39,7 +39,7 @@ pip install rng_rava
 Requirements: [pyserial](https://github.com/pyserial/pyserial), [numpy](https://github.com/numpy/numpy)
 
 
-## Usage
+## Usage example
 
 ```
 import rng_rava as rava
@@ -108,11 +108,10 @@ acq_ints.py, and acq_floats.py.
 
 ### tk
 
-Implements the RAVA_APP and RAVA_SUBAPP classes. 
-
-The RAVA_APP is a [Tk](https://docs.python.org/3/library/tkinter.html) 
-application designed to serve as a foundational framework for various Graphical 
-User Interface (GUI) sub-applications utilizing the RAVA device.
+Implements the RAVA_APP and RAVA_SUBAPP classes. The RAVA_APP is a 
+[Tk](https://docs.python.org/3/library/tkinter.html) application designed to 
+serve as a foundational framework for various Graphical User Interface (GUI) 
+sub-applications utilizing the RAVA device.
 
 Sub-applications are tk.Toplevel windows that integrate into the main 
 application. Derived from the RAVA_SUBAPP class, they become part of the main 
@@ -125,11 +124,11 @@ central buttons.
 
 ### Control Panel
 
-The Control Panel sub-application provides an GUI interface for testing the 
-features implemented by the RAVA driver, including EEPROM, PWM, RNG, HEALTH, 
-LED, and LAMP capabilities. 
+The Control Panel sub-app provides an GUI interface for testing the features 
+implemented by the RAVA driver, including EEPROM, PWM, RNG, HEALTH, LED, and 
+LAMP capabilities. 
 
-To execute it, enter the following command:
+Execute it using the following command:
 ```
 python3 -m rng_rava.tk.ctrlp
 ```
@@ -145,7 +144,7 @@ The Acquisition sub-app features a GUI interface for utilizing the
 RAVA_ACQUISITION class to generate files containing pulse counts, random bytes, 
 or numbers.
 
-To execute it, enter the following command:
+Execute it using the following command:
 ```
 python3 -m rng_rava.tk.acq
 ```
@@ -165,7 +164,7 @@ Regarding the [RAVA Firmware](https://github.com/gabrielguerrer/rng_rava_firmwar
 
 - [RAVA Device](https://github.com/gabrielguerrer/rng_rava)
 - [RAVA Firmware](https://github.com/gabrielguerrer/rng_rava_firmware)
-- [RAVA Python Diagnostics](https://github.com/gabrielguerrer/rng_rava_diag_py)
+- [RAVA Python Diagnostics](https://github.com/gabrielguerrer/rng_rava_diagnostics_py)
 
 
 ## Contact

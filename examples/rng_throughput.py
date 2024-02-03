@@ -18,7 +18,7 @@ dev_sns = rava.find_rava_sns()
 if len(dev_sns):
     rng.connect(serial_number=dev_sns[0])
 else:
-    rava.lg.error('No device found')
+    print('No device found')
     exit()
 
 def rng_bytes_throughput(n_bytes, n_repeat, postproc_id):
