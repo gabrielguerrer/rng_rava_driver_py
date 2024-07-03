@@ -5,8 +5,8 @@ Distributed under the MIT license - See LICENSE for details
 """
 
 """
-The Acquisition sub-app features a GUI interface for utilizing the 
-RAVA_ACQUISITION class, which allows the generation of files comprising pulse 
+The Acquisition sub-app features a GUI interface for utilizing the
+RAVA_ACQUISITION class, which allows the generation of files comprising pulse
 counts, bytes, or numbers extracted from a RAVA device.
 """
 
@@ -37,11 +37,11 @@ PAD = 10
 class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
 
     cfg_default_str = '''
-    [ACQUISITION]        
+    [ACQUISITION]
     chunk_bytes = 10000
     chunk_numbers = 5000
     delete_incomplete = True
-    path_out = 
+    path_out =
     '''
 
     def __init__(self, parent):
@@ -55,10 +55,10 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
 
         # Windows
         self.win_progress = WIN_PROGRESS(self)
-        self.win_progress.hide()        
+        self.win_progress.hide()
 
         # Widgets
-        self.nb = ttk.Notebook(self, padding=PAD)        
+        self.nb = ttk.Notebook(self, padding=PAD)
         self.nb.grid(row=0, column=0, sticky='nsew')
 
         self.frm_pcs = ttk.Frame(self, name='pulsecounts')
@@ -76,18 +76,18 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
         self.nb.add(self.frm_pcs, text=' Pulse Counts ')
         self.nb.add(self.frm_bytes, text=' Bytes ')
         self.nb.add(self.nfrm_nums, text=' Numbers ')
-        
+
         ## Start
-        
-        # Config        
+
+        # Config
         delete_incomplete = self.cfg.read('ACQUISITION', 'delete_incomplete', bool)
         out_path = self.cfg.read('ACQUISITION', 'path_out')
         self.var_acq_path.set(out_path)
 
         # RAVA_ACQUISITION
         self.rng_acq = RAVA_ACQUISITION(delete_incomplete=delete_incomplete)
-        self.rng_acq.cbkreg_progress(self.win_progress.prog_update)        
-        
+        self.rng_acq.cbkreg_progress(self.win_progress.prog_update)
+
 
     def pcs_widgets(self):
         self.frm_pcs.columnconfigure([0], weight=1)
@@ -144,11 +144,11 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
         # Preset
         self.lb_pcs_preset = ttk.Label(self.frm_pcs_pars, text='Preset')
         self.lb_pcs_preset.grid(row=2, column=0, sticky='w')
-        
+
         self.cbb_pcs_preset = ttk.Combobox(self.frm_pcs_pars, width=8, )
         self.cbb_pcs_preset.grid(row=2, column=1, sticky='w')
         self.cbb_pcs_preset.state(['readonly'])
-        self.cbb_pcs_preset['values'] = ['Report', 'Detailed']        
+        self.cbb_pcs_preset['values'] = ['Report', 'Detailed']
         self.cbb_pcs_preset.bind('<<ComboboxSelected>>', self.pcs_preset_sel)
         self.cbb_pcs_preset.set('Report')
 
@@ -215,11 +215,11 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
         # Preset
         self.lb_bytes_preset = ttk.Label(self.frm_bytes_pars, text='Preset')
         self.lb_bytes_preset.grid(row=2, column=0, sticky='w')
-        
+
         self.cbb_bytes_preset = ttk.Combobox(self.frm_bytes_pars, width=8, )
         self.cbb_bytes_preset.grid(row=2, column=1, sticky='w')
         self.cbb_bytes_preset.state(['readonly'])
-        self.cbb_bytes_preset['values'] = ['Report']        
+        self.cbb_bytes_preset['values'] = ['Report']
         self.cbb_bytes_preset.bind('<<ComboboxSelected>>', self.bytes_preset_sel)
         self.cbb_bytes_preset.set('Report')
 
@@ -252,7 +252,7 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
         # Number type
         self.lb_nums_type = ttk.Label(self.nfrm_nums_pars, text='Number (type, N)')
         self.lb_nums_type.grid(row=0, column=0, sticky='w')
-        
+
         self.cbb_nums_type = ttk.Combobox(self.nfrm_nums_pars, width=9)
         self.cbb_nums_type.grid(row=0, column=1, sticky='w')
         self.cbb_nums_type.state(['readonly'])
@@ -268,7 +268,7 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
         self.cbb_nums_n_mult.grid(row=0, column=3, sticky='w')
         self.cbb_nums_n_mult.state(['readonly'])
         self.cbb_nums_n_mult['values'] = ['', 'K', 'M', 'G', 'T']
-        self.cbb_nums_n_mult.set('M')        
+        self.cbb_nums_n_mult.set('M')
 
         # Number range
         self.lb_nums_range = ttk.Label(self.nfrm_nums_pars, text='Range (min, max)')
@@ -320,31 +320,31 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
         # Show result info
         if progress == 100:
             title_msg = 'Success'
-        else: 
+        else:
             title_msg = 'Canceled'
 
         time_msg = 'Time = ' + time_str
-        
+
         if len(outputs):
             detail_msg = '\nGenerated files\n{}'.format(outputs)
-        else: 
+        else:
             detail_msg = '\nIncomplete files deleted'
 
-        tkm.showinfo(parent=self.win_progress, title=title_msg, message=time_msg, detail=detail_msg)        
+        tkm.showinfo(parent=self.win_progress, title=title_msg, message=time_msg, detail=detail_msg)
 
         # Close win_progress
         self.win_progress.hide()
 
 
     def acq_path_search(self):
-        out_path0 = self.var_acq_path.get()        
+        out_path0 = self.var_acq_path.get()
         out_path0 = out_path0 if out_path0 and os.path.exists(out_path0) else '/'
         out_path = tk.filedialog.askdirectory(parent=self, initialdir=out_path0, mustexist=True)
         if out_path:
             self.var_acq_path.set(out_path)
             self.cfg.write('ACQUISITION', 'path_out', out_path)
 
-    
+
     def pcs_preset_sel(self, tk_event=None):
         if self.cbb_pcs_preset.get() == 'Report':
             self.var_pcs_si_min.set(10)
@@ -360,17 +360,17 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
             self.var_pcs_n.set(10)
             self.cbb_pcs_n_mult.set('M')
 
-    
+
     def pcs_generate(self):
         # Read vars
         out_path = self.var_acq_path.get()
         if not os.access(out_path, os.W_OK):
             tkm.showerror(parent=self, message='Error', detail='Cannot write on the chosen directory')
             return
-        
+
         si_min = self.var_pcs_si_min.get()
         si_max = self.var_pcs_si_max.get()
-        si_step = self.var_pcs_si_step.get()        
+        si_step = self.var_pcs_si_step.get()
         si_range = np.arange(si_min, si_max + 1, si_step)
         n_si_range = len(si_range)
         if n_si_range == 0:
@@ -401,7 +401,7 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
         # Show progress window
         with self.win_progress:
 
-            # Loop PCs acquisition        
+            # Loop PCs acquisition
             canceled = False
             for i, si in enumerate(si_range):
 
@@ -412,7 +412,7 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
                 self.rng.snd_rng_setup(si)
 
                 # Collect PCs
-                outputs, _, _ = self.rng_acq.get_pulse_counts(rng=self.rng, n_pcs=n_pcs, n_chunk=n_chunk, rng_out='AB', 
+                outputs, _, _ = self.rng_acq.get_pulse_counts(rng=self.rng, n_pcs=n_pcs, n_chunk=n_chunk, rng_out='AB',
                                                             out_file=False, out_path='', threaded=False)
                 if len(outputs):
                     pcs_a[i], pcs_b[i] = outputs
@@ -438,7 +438,7 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
             out_name = '{}_PCS_{}_SI_{}_{}_{}__'.format(sn, n_pcs_str, si_min, si_max, si_step)
             n_out_name = len(glob(os.path.join(out_path, out_name + '*.npz')))
             output_file = os.path.join(out_path, out_name + '{}.npz'.format(n_out_name + 1))
-            
+
             np.savez_compressed(output_file, pwm_setup=pwm_setup, rng_setup=rng_setup, si_range=si_range, pcs_a=pcs_a, pcs_b=pcs_b)
 
             # Info screen
@@ -476,9 +476,9 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
         self.lg.info('{}: Generating {} Bytes; postproc={}, rng_out={}'.format(self.name, n_bytes, postproc, rng_out))
 
         # Start byte acquisition
-        self.win_progress.show()        
+        self.win_progress.show()
 
-        result_future = self.rng_acq.get_bytes(rng=self.rng, n_bytes=n_bytes, n_chunk=n_chunk, postproc=postproc, 
+        result_future = self.rng_acq.get_bytes(rng=self.rng, n_bytes=n_bytes, n_chunk=n_chunk, postproc=postproc,
                                                rng_out=rng_out, out_file=True, out_path=out_path, threaded=True)
         result_future.add_done_callback(self.acquisition_finished)
 
@@ -505,7 +505,7 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
         if not os.access(out_path, os.W_OK):
             tkm.showerror(parent=self, title='Error', message='Cannot write on the chosen directory')
             return
-        
+
         num_type_str = self.cbb_nums_type.get()
         num_type = int if num_type_str == 'INT' else float
         n_nums = int(get_ammount_prefix_number(n=self.var_nums_n.get(), prefix=self.cbb_nums_n_mult.get()))
@@ -524,11 +524,11 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
                      .format(self.name, n_nums, num_type_str, num_min, num_max))
 
         # Start number acquisition
-        self.win_progress.show()        
+        self.win_progress.show()
 
-        result_future = self.rng_acq.get_numbers(rng=self.rng, n_nums=n_nums, n_chunk=n_chunk, num_type=num_type, 
-                                                 num_min=num_min, num_max=num_max, out_file=True, out_path=out_path, 
-                                                 out_file_binary=out_binary, out_file_separator=out_separator, 
+        result_future = self.rng_acq.get_numbers(rng=self.rng, n_nums=n_nums, n_chunk=n_chunk, num_type=num_type,
+                                                 num_min=num_min, num_max=num_max, out_file=True, out_path=out_path,
+                                                 out_file_binary=out_binary, out_file_separator=out_separator,
                                                  threaded=True)
         result_future.add_done_callback(self.acquisition_finished)
 

@@ -38,11 +38,11 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
         win_resizable = False
         if not super().__init__(parent, name=name, win_title=win_title, win_geometry=win_geometry, win_resizable=win_resizable):
             return
-        
+
         # Led and Lamp enabled?
         self.led_enabled = True if (isinstance(self.rng, RAVA_RNG_LED) and self.rng.led_enabled) else False
         self.lamp_enabled = True if (self.led_enabled and self.rng.lamp_enabled) else False
-        
+
         # Widgets
         self.nb = ttk.Notebook(self, padding=PAD)
         self.nb.grid(row=0, column=0, sticky='nsew')
@@ -1053,7 +1053,7 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
         postproc = self.cbb_rng_data_byte_pp.get()
         postproc_id = D_RNG_POSTPROC[postproc]
 
-        bytes_a, bytes_b = self.rng.get_rng_bytes(n, postproc_id, output_type='array')        
+        bytes_a, bytes_b = self.rng.get_rng_bytes(n, postproc_id, output_type='array')
         self.rng_output_set(bytes_a, bytes_b)
 
 
@@ -1091,7 +1091,7 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
 
         floats = self.rng.get_rng_floats(n, output_type='array')
         if floats is not None:
-            floats = min + delta * floats            
+            floats = min + delta * floats
             self.rng_output_set(floats, '')
 
 

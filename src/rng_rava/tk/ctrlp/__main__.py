@@ -10,7 +10,7 @@ This code evokes the RAVA's Tk Control Panel application.
 To execute it, enter the following command: python3 -m rng_rava.tk.ctrlp
 """
 
-import rng_rava as rava 
+import rng_rava as rava
 
 TITLE = 'RAVA Control Panel'
 

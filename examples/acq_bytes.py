@@ -1,5 +1,5 @@
 '''
-This example illustrates the generation of random bytes to binary files using 
+This example illustrates the generation of random bytes to binary files using
 the RAVA_ACQUISITION class.
 
 This example code is in the public domain.

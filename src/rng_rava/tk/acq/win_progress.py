@@ -49,7 +49,7 @@ class WIN_PROGRESS(tk.Toplevel):
         # Start
         self.acquiring = False
 
-    
+
     def set_extra_title(self, extra_str=''):
         self.title(' Progress ' + extra_str)
 
@@ -68,7 +68,7 @@ class WIN_PROGRESS(tk.Toplevel):
         self.grab_release()
         self.withdraw()
         self.set_extra_title('')
-    
+
 
     def __enter__(self):
         self.show()
@@ -83,7 +83,7 @@ class WIN_PROGRESS(tk.Toplevel):
         self.master.update()    # Update widgets on non-threaded mode
 
 
-    def prog_cancel(self):        
+    def prog_cancel(self):
         if tkm.askyesno(parent=self, title=('Cancel'), message='Cancel?'):
             self.acquiring = False
             try:

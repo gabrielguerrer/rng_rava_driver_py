@@ -10,15 +10,15 @@ comprising random bytes, numbers or pulse counts extracted from a RAVA device.
 Generation can occur in either threaded or blocking mode, and the output
 can be presented as a memory array or a disk file.
 
-For the get_pulse_counts() and get_bytes() functions, when out_file=True, they 
-generate binary files. In contrast, the get_numbers() function provides the 
-option to produce a text file by setting the parameter out_file_binary=False. 
-In the text output, entries are separated by the out_separator character. 
-When get_numbers() has the parameter out_file_binary=True, the files are 
+For the get_pulse_counts() and get_bytes() functions, when out_file=True, they
+generate binary files. In contrast, the get_numbers() function provides the
+option to produce a text file by setting the parameter out_file_binary=False.
+In the text output, entries are separated by the out_separator character.
+When get_numbers() has the parameter out_file_binary=True, the files are
 saved using the numpy npy file format.
 
-The get_numbers() function generates one file or array, which alternates entries 
-from both RNG cores. The get_pulse_counts() and get_bytes() functions accept a 
+The get_numbers() function generates one file or array, which alternates entries
+from both RNG cores. The get_pulse_counts() and get_bytes() functions accept a
 rng_out parameter, which can be:
 * 'A': 1 output file, RNG core A only
 * 'B': 1 output file, RNG core B only
@@ -26,11 +26,11 @@ rng_out parameter, which can be:
 
 For get_bytes(), the parameter rng_out also accepts:
 * 'AB_XOR': 1 output file, obtained by XORing RNG cores A and B output
-* 'AB_ALT': 1 output file, with alternating bytes from RNG cores A and B. 
+* 'AB_ALT': 1 output file, with alternating bytes from RNG cores A and B.
    Requires half of the time to produce n_bytes
 
-A progress callback is established by registering a function through 
-cbkreg_progress(). This function is invoked every time a data chunk of size 
+A progress callback is established by registering a function through
+cbkreg_progress(). This function is invoked every time a data chunk of size
 n_chunk is generated, providing information about the progress percentage.
 """
 

@@ -89,23 +89,23 @@ class RAVA_APP(tk.Tk):
         self.protocol('WM_DELETE_WINDOW', self.app_close)
         self.resizable(False, False) # No resize
         self.option_add('*tearOff', tk.FALSE) # Diable menu tear-off
-        self.update() # Update geometry       
-        
+        self.update() # Update geometry
+
         # Files
         if not os.path.exists(HOME_RAVA_PATH):
             os.mkdir(HOME_RAVA_PATH)
-    
+
         self.filename_logo = os.path.join(os.path.dirname(__file__), 'rava.png')
         self.filename_cfg = os.path.join(HOME_RAVA_PATH, '{}.cfg'.format(cfg_log_name))
         self.filename_log = os.path.join(HOME_RAVA_PATH, '{}.log'.format(cfg_log_name))
 
-        # Logger setup        
+        # Logger setup
         self.lgr, self.lg = self.log_setup()
 
         # Config setup
         cfg_subapp_str = [subapp_dict['class'].cfg_default_str for subapp_dict in self.subapp_dicts if subapp_dict['class'].cfg_default_str]
         cfg_str = '\n'.join([self.cfg_default_str] + cfg_subapp_str)
-        
+
         self.cfg = RAVA_CFG(self.filename_cfg, cfg_str)
 
         # Catch Tk exeptions
@@ -136,7 +136,7 @@ class RAVA_APP(tk.Tk):
         self.frm_status = ttk.Frame(self, padding=(4, 4))
         self.frm_status.grid(row=2, column=0, sticky='ew')
         self.widgets_status()
-        
+
         self.task_status = None
 
         ## Key Binds
@@ -153,7 +153,7 @@ class RAVA_APP(tk.Tk):
         if not rava_class in [RAVA_RNG, RAVA_RNG_LED]:
             self.lg.error('{}: Please provide rava_class as RAVA_RNG or RAVA_RNG_LED'.format(self.name))
             return
-        
+
         self.rng = rava_class()
 
         # Register disconnect callback
@@ -188,7 +188,7 @@ class RAVA_APP(tk.Tk):
             lg.addHandler(lg_fh)
             lg.setLevel(logging.INFO)
 
-        # Unhandled Exceptions 
+        # Unhandled Exceptions
         def log_unhandled_exception(exc_type, exc_value, exc_traceback):
             if issubclass(exc_type, KeyboardInterrupt):
                 sys.__excepthook__(exc_type, exc_value, exc_traceback) # Call default excepthook
@@ -227,9 +227,9 @@ class RAVA_APP(tk.Tk):
     def subapp_evaluate(self, subapp_dicts):
         # Test if subapp_dicts is a list of dictionaries containing SUBAPP_DICT_KEYS keys
         for subapp_dict in subapp_dicts:
-            if not (isinstance(subapp_dict, dict) and set(subapp_dict.keys()) == set(SUBAPP_DICT_KEYS)):                
+            if not (isinstance(subapp_dict, dict) and set(subapp_dict.keys()) == set(SUBAPP_DICT_KEYS)):
                 return False
-        
+
         # Test values
         for subapp_dict in subapp_dicts:
 
@@ -237,12 +237,12 @@ class RAVA_APP(tk.Tk):
             if not issubclass(subapp_dict['class'], RAVA_SUBAPP):
                 return False
 
-            # Default values            
+            # Default values
             if subapp_dict['show_button'] is None:
                 subapp_dict['cfg_log_name'] = True
             if subapp_dict['use_rng'] is None:
                 subapp_dict['cfg_log_name'] = True
-            
+
         return True
 
 

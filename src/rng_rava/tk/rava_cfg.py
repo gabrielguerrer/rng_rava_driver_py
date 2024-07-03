@@ -19,7 +19,7 @@ class RAVA_CFG:
 
     def __init__(self, cfg_filename, cfg_str):
         self.name = 'RAVA_CFG'
-        self.lg = logging.getLogger('rava')        
+        self.lg = logging.getLogger('rava')
 
         # Initialize parser
         self.cfg_filename = cfg_filename
@@ -51,7 +51,7 @@ class RAVA_CFG:
         else:
             self.lg.info('{} Config: Creating file with default content'.format(self.name))
             cfg_parser = cfg_default
-            
+
             # Save
             with open(cfg_filename, 'w') as cfg_file:
                 cfg_parser.write(cfg_file)
@@ -80,7 +80,7 @@ class RAVA_CFG:
         if type(value) is not str:
             value = str(value)
         self.cfg_parser.set(section, option, value)
-        
+
         # Save?
         if save:
             with open(self.cfg_filename, 'w') as cfg_file:
