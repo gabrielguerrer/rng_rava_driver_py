@@ -12,8 +12,8 @@ asynchronous framework.
 import asyncio
 import numpy as np
 
-from rng_rava.rava_rng import RAVA_RNG
-from rng_rava.rava_rng import find_rava_port, version_a_greater_b, print_health_startup_results, bytes_to_list, bytes_to_array
+from rng_rava import RAVA_RNG
+from rng_rava import find_rava_port, version_a_greater_b, print_health_startup_results, bytes_to_list, bytes_to_array
 from rng_rava.rava_defs import *
 
 
@@ -63,8 +63,7 @@ class RAVA_RNG_AIO(RAVA_RNG):
 
         # Check Firmware version
         if version_a_greater_b(FIRMWARE_MIN_VERSION, self.firmware_version):
-            self.lg.error('{} Connect: Firmware version v{} is incompatible with the driver'
-                          .format(self.dev_name, self.firmware_version))
+            self.lg.error('{} Connect: Firmware version v{} is incompatible with the driver'.format(self.dev_name, self.firmware_version))
             return False
 
         # Print connection info
@@ -84,6 +83,9 @@ class RAVA_RNG_AIO(RAVA_RNG):
             if not self.health_startup_success:
                 self.lg.error('{} Connect: Startup tests failed'.format(self.dev_name))
                 return False
+
+        # Reset Health continuous erros
+        self.get_health_continuous_errors()
 
         return True
 
@@ -411,6 +413,7 @@ class RAVA_RNG_AIO(RAVA_RNG):
 
 
     async def get_rng_int16s(self, n_ints, int_delta, output_type='array'):
+        # int_delta = int_max - int_min
         if n_ints == 0:
             self.lg.error('{} RNG Ints: Provide n_ints > 0'.format(self.dev_name))
             return None
@@ -475,7 +478,7 @@ class RAVA_RNG_AIO(RAVA_RNG):
 
             elif output_type == 'array':
                     rng_a = bytes_to_array(rng_bytes_a, np.uint8)
-                    rng_b = bytes_to_array(rng_bytes_a, np.uint8)
+                    rng_b = bytes_to_array(rng_bytes_b, np.uint8)
                     return rng_a, rng_b
 
             else:

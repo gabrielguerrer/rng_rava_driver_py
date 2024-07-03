@@ -50,3 +50,6 @@ ints16 = rng.get_rng_int16s(n_ints=100, int_delta=9999)
 
 # Generate 100 32-bit floats ranging between 0 and 1
 floats = rng.get_rng_floats(n_floats=100)
+
+# Close RAVA device
+rng.close()

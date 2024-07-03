@@ -7,6 +7,10 @@ Author: Gabriel Guerrer
 
 import rng_rava as rava
 
+# Variables
+STREAM_INTERVAL_MS = 500
+STREAM_N_BYTES = 5
+
 # Find RAVA device and connect
 rng = rava.RAVA_RNG()
 dev_sns = rava.find_rava_sns()
@@ -17,7 +21,7 @@ else:
     exit()
 
 # Generate 3 bytes every 0.5s
-rng.snd_rng_byte_stream_start(n_bytes=5, stream_interval_ms=500)
+rng.snd_rng_byte_stream_start(n_bytes=STREAM_N_BYTES, stream_interval_ms=STREAM_INTERVAL_MS)
 
 # Print 10 first values
 print()

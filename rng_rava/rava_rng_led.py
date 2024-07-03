@@ -16,7 +16,7 @@ documentation.
 
 import struct
 
-from rng_rava.rava_rng import RAVA_RNG
+from rng_rava import RAVA_RNG
 from rng_rava.rava_defs import *
 
 ### RAVA_RNG_LED

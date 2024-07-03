@@ -32,7 +32,6 @@ import sys
 import os
 import os.path
 from functools import partial
-import configparser
 import logging
 
 import tkinter as tk
@@ -40,35 +39,38 @@ from tkinter import ttk
 import tkinter.messagebox as tkm
 import tkinter.filedialog as tkfd
 
-from rng_rava.tk.rava_subapp import RAVA_SUBAPP
-from rng_rava.rava_rng_led import RAVA_RNG_LED
-from rng_rava.rava_rng import find_rava_sns
+from rng_rava.tk import RAVA_CFG, RAVA_SUBAPP
+from rng_rava import find_rava_sns, RAVA_RNG, RAVA_RNG_LED
 
 
-### VARS
+### Parameters
 
 PAD = 10
 HOME_RAVA_PATH = os.path.join(os.path.expanduser('~'), '.rava/')
 SUBAPP_DICT_KEYS = ['class', 'menu_title', 'show_button', 'use_rng']
+
+LOG_NAME_RAVA_DRV = 'rava'
+LOG_NAME_RAVA_APP = 'rava_app'
 LOG_LEVELS = ['DEBUG', 'INFO', 'WARNING', 'ERROR']
+
 
 ### RAVA_APP
 
 class RAVA_APP(tk.Tk):
 
     cfg_default_str = '''
-    [LOG]
+    [RAVA_LOG]
     level_rava_driver = INFO
     level_rava_app = INFO
-    show_on_startup = False
+    show_on_startup = True
     update_interval_ms = 500
 
-    [APP]
+    [RAVA_APP]
     connect_on_startup = True
     status_duration_ms = 3000
     '''
 
-    def __init__(self, title, geometry='480x300', subapp_dicts=[], cfg_log_name='rava'):
+    def __init__(self, title, geometry='480x300', subapp_dicts=[], rava_class=RAVA_RNG, cfg_log_name='rava'):
         # Evaluate parameters
         if not self.subapp_evaluate(subapp_dicts):
             print('RAVA_APP Error: subapp_dicts must be suplied as a list of dictionaries containing the following keys: {}'
@@ -101,7 +103,10 @@ class RAVA_APP(tk.Tk):
         self.lgr, self.lg = self.log_setup()
 
         # Config setup
-        self.cfg_setup()
+        cfg_subapp_str = [subapp_dict['class'].cfg_default_str for subapp_dict in self.subapp_dicts if subapp_dict['class'].cfg_default_str]
+        cfg_str = '\n'.join([self.cfg_default_str] + cfg_subapp_str)
+        
+        self.cfg = RAVA_CFG(self.filename_cfg, cfg_str)
 
         # Catch Tk exeptions
         self.report_callback_exception = self.app_handle_tk_exception
@@ -145,13 +150,17 @@ class RAVA_APP(tk.Tk):
         self.widgets_state(rava_connected=False)
 
         # Initialize RAVA Device
-        self.rng = RAVA_RNG_LED()
+        if not rava_class in [RAVA_RNG, RAVA_RNG_LED]:
+            self.lg.error('{}: Please provide rava_class as RAVA_RNG or RAVA_RNG_LED'.format(self.name))
+            return
+        
+        self.rng = rava_class()
 
         # Register disconnect callback
         self.rng.cbkreg_device_close(self.rava_disconnect)
 
         # Scan for RAVA devices and connect if one found
-        if self.cfg_read('APP', 'connect_on_startup', bool):
+        if self.cfg.read('RAVA_APP', 'connect_on_startup', bool):
             self.rava_scan()
 
 
@@ -166,14 +175,14 @@ class RAVA_APP(tk.Tk):
         lg_fh.setFormatter(lg_fmt)
 
         # Logger : RAVA Driver
-        lgr = logging.getLogger('rava')
+        lgr = logging.getLogger(LOG_NAME_RAVA_DRV)
         if not lgr.hasHandlers():
             lgr.addHandler(lg_sh)
             lgr.addHandler(lg_fh)
             lgr.setLevel(logging.INFO)
 
         # Logger: RAVA APP
-        lg = logging.getLogger('rava_app')
+        lg = logging.getLogger(LOG_NAME_RAVA_APP)
         if not lg.hasHandlers():
             lg.addHandler(lg_sh)
             lg.addHandler(lg_fh)
@@ -189,67 +198,6 @@ class RAVA_APP(tk.Tk):
         sys.excepthook = log_unhandled_exception
 
         return lgr, lg
-
-
-    ## CONFIG
-
-    def cfg_setup(self):
-        # Default cfg
-        cfg_extra_str = [subapp_dict['class'].cfg_default_str for subapp_dict in self.subapp_dicts]
-        cfg_str = '\n'.join([self.cfg_default_str, *cfg_extra_str])
-        cfg_default = configparser.ConfigParser()
-        cfg_default.read_string(cfg_str)
-
-        # Config file already exists?
-        if os.path.isfile(self.filename_cfg):
-
-            # Read cfg info
-            self.cfg = configparser.ConfigParser()
-            self.cfg.read(self.filename_cfg)
-
-            # The read cfg contains all the expected entries?
-            for key in cfg_default:
-                if key not in self.cfg or set(self.cfg[key].keys()) != set(cfg_default[key].keys()):
-                    os.remove(self.filename_cfg)
-                    self.lg.error('{} Config: The provided config file is incomplete. Please restart the application.'
-                             .format(self.name))
-                    exit()
-
-        # Config file inexists, create it with default values
-        else:
-            self.lg.info('{} Config: Creating file with default content'.format(self.name))
-            self.cfg = cfg_default
-            self.cfg_save()
-
-
-    def cfg_read(self, section, option, type=str):
-        # Return config option in the appropriate type
-        if type is int:
-            data = self.cfg.getint(section, option)
-        elif type is float:
-            data = self.cfg.getfloat(section, option)
-        elif type is bool:
-            data = self.cfg.getboolean(section, option)
-        else:
-            data = self.cfg.get(section, option)
-
-        return data
-
-
-    def cfg_write(self, section, option, value, save=True):
-        # Write config option
-        if type(value) is not str:
-            value = str(value)
-        self.cfg.set(section, option, value)
-        
-        if save:
-            self.cfg_save()
-
-
-    def cfg_save(self):
-        # Write config file to disk
-        with open(self.filename_cfg, 'w') as cfg_file:
-            self.cfg.write(cfg_file)
 
 
     ## APP
@@ -498,7 +446,7 @@ class RAVA_APP(tk.Tk):
 
         # Erase after status_duration_ms
         if str:
-            status_duration_ms = self.cfg_read('APP', 'status_duration_ms', int)
+            status_duration_ms = self.cfg.read('RAVA_APP', 'status_duration_ms', int)
             self.task_status = self.after(status_duration_ms, self.status_set, '')
 
 
@@ -516,8 +464,9 @@ class WIN_LOG(tk.Toplevel):
         self.columnconfigure([0], weight=1)
         self.protocol('WM_DELETE_WINDOW', self.hide) # One instance
 
-        # Logging
+        # Logging / cfg
         self.lg = self.master.lg
+        self.cfg = self.master.cfg
 
         # Widgets
         self.widgets()
@@ -526,7 +475,7 @@ class WIN_LOG(tk.Toplevel):
         self.bind('<Control-Key-q>', lambda event=None: self.master.app_close())
 
         ## Start
-        show_on_startup = self.master.cfg_read('LOG', 'show_on_startup', bool)
+        show_on_startup = self.cfg.read('RAVA_LOG', 'show_on_startup', bool)
         if not show_on_startup:
             self.hide()
 
@@ -617,31 +566,31 @@ class WIN_LOG(tk.Toplevel):
             self.txt_log.configure(state='disabled')
 
         # Schedule new update
-        update_interval_ms = self.master.cfg_read('LOG', 'update_interval_ms', int)
+        update_interval_ms = self.cfg.read('RAVA_LOG', 'update_interval_ms', int)
         self.task_log_update = self.after(update_interval_ms, self.log_update)
 
 
     def cfg_read_update_widgets(self):
         # level_rava_driver
-        level_rava_driver_str = self.master.cfg_read('LOG', 'level_rava_driver')
+        level_rava_driver_str = self.cfg.read('RAVA_LOG', 'level_rava_driver')
+
         if level_rava_driver_str in LOG_LEVELS:
             self.cbb_rava_driver_level.set(level_rava_driver_str)
         else:
-            self.lg.warning('{}: Unknown level_rava_driver={}. Provide one of those:{}'
-                       .format(self.name, level_rava_driver_str, LOG_LEVELS))
+            self.lg.warning('{}: Unknown level_rava_driver={}. Provide one of those:{}'.format(self.name, level_rava_driver_str, LOG_LEVELS))
             self.cbb_rava_driver_level.set('INFO')
 
         # level_rava_app
-        level_rava_app_str = self.master.cfg_read('LOG', 'level_rava_app')
+        level_rava_app_str = self.cfg.read('RAVA_LOG', 'level_rava_app')
+
         if level_rava_app_str in LOG_LEVELS:
             self.cbb_rava_app_level.set(level_rava_app_str)
         else:
-            self.lg.warning('{}: Unknown level_rava_app={}. Provide one of those:{}'
-                       .format(self.name, level_rava_app_str, LOG_LEVELS))
+            self.lg.warning('{}: Unknown level_rava_app={}. Provide one of those:{}'.format(self.name, level_rava_app_str, LOG_LEVELS))
             self.cbb_rava_app_level.set('INFO')
 
         # show_on_startup
-        show_on_startup = self.master.cfg_read('LOG', 'show_on_startup', bool)
+        show_on_startup = self.cfg.read('RAVA_LOG', 'show_on_startup', bool)
         self.var_show_startup.set(show_on_startup)
 
 
@@ -653,7 +602,7 @@ class WIN_LOG(tk.Toplevel):
 
         # Update cfg
         if write:
-            self.master.cfg_write('LOG', 'level_rava_driver', level_rava_driver_str)
+            self.cfg.write('RAVA_LOG', 'level_rava_driver', level_rava_driver_str)
 
 
     def log_level_rava_app(self, tk_event=None, write=True):
@@ -664,13 +613,13 @@ class WIN_LOG(tk.Toplevel):
 
         # Update cfg
         if write:
-            self.master.cfg_write('LOG', 'level_rava_app', level_rava_app_str)
+            self.cfg.write('RAVA_LOG', 'level_rava_app', level_rava_app_str)
 
 
     def log_win_show_startup(self, tk_event=None, write=True):
         # Update cfg
         if write:
-            self.master.cfg_write('LOG', 'show_on_startup', self.var_show_startup.get())
+            self.cfg.write('RAVA_LOG', 'show_on_startup', self.var_show_startup.get())
 
 
     def log_copy(self):

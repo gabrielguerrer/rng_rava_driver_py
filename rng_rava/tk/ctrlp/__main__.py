@@ -10,16 +10,16 @@ This code evokes the RAVA's Tk Control Panel application.
 To execute it, enter the following command: python3 -m rng_rava.tk.ctrlp
 """
 
-from rng_rava.tk import RAVA_APP
-from rng_rava.tk.ctrlp import rava_subapp_control_panel
+import rng_rava as rava 
 
 TITLE = 'RAVA Control Panel'
-SUBAPPS = [rava_subapp_control_panel]
+
+SUBAPPS = [rava.tk.ctrlp.rava_subapp_control_panel]
 
 
 def main():
     # RAVA main app
-    tkapp = RAVA_APP(title=TITLE, subapp_dicts=SUBAPPS, cfg_log_name='rava_ctrlp')
+    tkapp = rava.tk.RAVA_APP(title=TITLE, subapp_dicts=SUBAPPS, rava_class=rava.RAVA_RNG_LED, cfg_log_name='rava_ctrlp')
 
     # Enter Tk loop
     tkapp.mainloop()

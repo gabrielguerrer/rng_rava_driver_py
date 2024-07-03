@@ -10,7 +10,7 @@ import rng_rava as rava
 
 # Variables
 OUT_FILE = False                        # Array output
-N_PCS = 100000                          # 100K
+N_PCS = 100000                           # 100K
 N_CHUNK = 10000                         # Update progress every 10K
 RNG_OUT = 'AB'                          # Generate 2 files, one for each RNG core
 THREADED = True                         # Non-blocking mode

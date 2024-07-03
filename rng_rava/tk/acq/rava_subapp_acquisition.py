@@ -25,6 +25,7 @@ import numpy as np
 from rng_rava.acq import RAVA_ACQUISITION, ACQ_BYTES_RNG_OUT, get_ammount_prefix_number, get_ammount_prefix_str
 from rng_rava.rava_defs import D_RNG_POSTPROC
 from rng_rava.tk import RAVA_SUBAPP
+from rng_rava.tk.acq import WIN_PROGRESS
 
 ### VARS
 
@@ -79,8 +80,8 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
         ## Start
         
         # Config        
-        delete_incomplete = self.master.cfg_read('ACQUISITION', 'delete_incomplete', bool)
-        out_path = self.master.cfg_read('ACQUISITION', 'path_out')
+        delete_incomplete = self.cfg.read('ACQUISITION', 'delete_incomplete', bool)
+        out_path = self.cfg.read('ACQUISITION', 'path_out')
         self.var_acq_path.set(out_path)
 
         # RAVA_ACQUISITION
@@ -341,7 +342,7 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
         out_path = tk.filedialog.askdirectory(parent=self, initialdir=out_path0, mustexist=True)
         if out_path:
             self.var_acq_path.set(out_path)
-            self.master.cfg_write('ACQUISITION', 'path_out', out_path)
+            self.cfg.write('ACQUISITION', 'path_out', out_path)
 
     
     def pcs_preset_sel(self, tk_event=None):
@@ -377,10 +378,10 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
             return
 
         n_pcs = int(get_ammount_prefix_number(n=self.var_pcs_n.get(), prefix=self.cbb_pcs_n_mult.get()))
-        n_chunk = self.master.cfg_read('ACQUISITION', 'chunk_bytes', int)
+        n_chunk = self.cfg.read('ACQUISITION', 'chunk_bytes', int)
 
         # Save cfg
-        self.master.cfg_write('ACQUISITION', 'path_out', out_path)
+        self.cfg.write('ACQUISITION', 'path_out', out_path)
 
         # Info
         self.lg.info('{}: Generating {} Pulse Counts in the range ({}, {}, {})'
@@ -438,8 +439,7 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
             n_out_name = len(glob(os.path.join(out_path, out_name + '*.npz')))
             output_file = os.path.join(out_path, out_name + '{}.npz'.format(n_out_name + 1))
             
-            np.savez_compressed(output_file, pwm_setup=pwm_setup, rng_setup=rng_setup, si_range=si_range, 
-                                pcs_a=pcs_a, pcs_b=pcs_b)
+            np.savez_compressed(output_file, pwm_setup=pwm_setup, rng_setup=rng_setup, si_range=si_range, pcs_a=pcs_a, pcs_b=pcs_b)
 
             # Info screen
             tkm.showinfo(parent=self, title='Success', message='Time = ' + time_str, detail='\nGenerated file\n{}'.format([output_file]))
@@ -467,10 +467,10 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
         n_bytes = int(get_ammount_prefix_number(n=self.var_bytes_n.get(), prefix=self.cbb_bytes_n_mult.get()))
         postproc = self.cbb_bytes_postproc.get()
         rng_out = self.cbb_bytes_rngout.get()
-        n_chunk = self.master.cfg_read('ACQUISITION', 'chunk_bytes', int)
+        n_chunk = self.cfg.read('ACQUISITION', 'chunk_bytes', int)
 
         # Save cfg
-        self.master.cfg_write('ACQUISITION', 'path_out', out_path)
+        self.cfg.write('ACQUISITION', 'path_out', out_path)
 
         # Info
         self.lg.info('{}: Generating {} Bytes; postproc={}, rng_out={}'.format(self.name, n_bytes, postproc, rng_out))
@@ -514,10 +514,10 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
         out_binary = True if self.cbb_nums_out_type.get() == 'Binary' else False
         out_separator = self.cbb_nums_out_sep.get()
         out_separator = '\n' if out_separator == 'LINE' else out_separator
-        n_chunk = self.master.cfg_read('ACQUISITION', 'chunk_numbers', int)
+        n_chunk = self.cfg.read('ACQUISITION', 'chunk_numbers', int)
 
         # Save cfg
-        self.master.cfg_write('ACQUISITION', 'path_out', out_path)
+        self.cfg.write('ACQUISITION', 'path_out', out_path)
 
         # Info
         self.lg.info('{}: Generating {} {} Numbers; range=[{}, {}]'
@@ -531,80 +531,6 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
                                                  out_file_binary=out_binary, out_file_separator=out_separator, 
                                                  threaded=True)
         result_future.add_done_callback(self.acquisition_finished)
-
-
-### WIN_PROGRESS
-
-class WIN_PROGRESS(tk.Toplevel):
-
-    def __init__(self, parent):
-        # Initiate WIN_PROGRESS
-        super().__init__(parent)
-        self.name = 'WIN_PROGRESS'
-        self.title(' Progress ')
-        self.geometry('350x100+{}+{}'.format(self.master.winfo_x() + self.master.winfo_width() + 10, self.master.winfo_y()))
-        self.rowconfigure([0], weight=1)
-        self.columnconfigure([0], weight=1)
-        self.resizable(False, False) # No resize
-        self.protocol('WM_DELETE_WINDOW', lambda: None)
-
-        # Widgets
-        self.frame = ttk.Frame(self, padding=(PAD, PAD))
-        self.frame.grid(row=0, column=0, sticky='nsew')
-        self.frame.columnconfigure([0], weight=1)
-        self.frame.rowconfigure([0,1], weight=1)
-
-        self.var_progress = tk.DoubleVar(value=0)
-        self.pb_progress = ttk.Progressbar(self.frame, orient=tk.HORIZONTAL, length=200, mode='determinate', variable=self.var_progress, maximum=100.0)
-        self.pb_progress.grid(row=0, column=0, sticky='ew', padx=2*PAD)
-
-        self.bt_cancel = ttk.Button(self.frame, text='Cancel', command=self.prog_cancel)
-        self.bt_cancel.grid(row=1, column=0)
-
-        # Start
-        self.acquiring = False
-
-    
-    def set_extra_title(self, extra_str=''):
-        self.title(' Progress ' + extra_str)
-
-
-    def show(self):
-        self.acquiring = True
-        self.prog_update(0)
-        self.geometry('350x100+{}+{}'.format(self.master.winfo_x() + self.master.winfo_width() + 10, self.master.winfo_y()))
-        self.wm_deiconify()
-        self.master.update()    # Update widgets on non-threaded mode
-        self.grab_set()         # Can't perform other actions while progress window is shown
-
-
-    def hide(self):
-        self.acquiring = False
-        self.grab_release()
-        self.withdraw()
-        self.set_extra_title('')
-    
-
-    def __enter__(self):
-        self.show()
-
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.hide()
-
-
-    def prog_update(self, progress):
-        self.var_progress.set(progress)
-        self.master.update()    # Update widgets on non-threaded mode
-
-
-    def prog_cancel(self):        
-        if tkm.askyesno(parent=self, title=('Cancel'), message='Cancel?'):
-            self.acquiring = False
-            try:
-                self.master.rng_acq.stop()
-            except:
-                pass
 
 
 rava_subapp_acquisition = {'class':RAVA_SUBAPP_ACQUISITION,

@@ -35,7 +35,15 @@ async def main():
         rng.get_rng_int16s(n_ints=N_DATA, int_delta=1000, output_type='list'),
         rng.get_rng_floats(n_floats=N_DATA, output_type='list')
     )
-    print('\nRNG data: {}\n'.format(results))
+
+    # Print results
+    print('\nRESULTS')
+    print('\nPulse Count = {}'.format(results[0]))
+    print('\nBits = {}'.format(results[1]))
+    print('\nBytes = {}'.format(results[2]))
+    print('\nInt8s = {}'.format(results[3]))
+    print('\nInt16s = {}'.format(results[4]))
+    print('\nFloats = {}'.format(results[5]))
 
     # Close device
     rng.close()

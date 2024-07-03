@@ -22,6 +22,7 @@ class RAVA_SUBAPP(tk.Toplevel):
     def __init__(self, parent, name, win_title, win_geometry, win_resizable=False):
         # Initialize tk.Toplevel
         super().__init__(parent)
+        self.parent = parent
 
         ## Initialize RAVA_SUBAPP
         self.name = name
@@ -41,6 +42,7 @@ class RAVA_SUBAPP(tk.Toplevel):
         # Shortcuts
         self.lg = self.master.lg
         self.lgr = self.master.lgr
+        self.cfg = self.master.cfg
         self.rng = self.master.rng
 
         # Debug

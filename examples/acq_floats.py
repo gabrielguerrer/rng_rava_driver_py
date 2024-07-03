@@ -12,7 +12,7 @@ import rng_rava as rava
 OUT_FILE = True                         # File output
 OUT_PATH = './'                         # Update with the desired output path
 OUT_BINARY = True                       # Output as a binary file
-N_NUMS = 500000                         # 500k floats
+N_NUMS = 50000                          # 50k floats
 N_CHUNK = 5000                          # Update progress every 5K floats
 NUM_TYPE = float                        # Produce floats
 NUM_MIN = 0                             # Float range (0,1]

@@ -15,6 +15,7 @@ from tkinter import ttk
 import tkinter.messagebox as tkm
 
 from rng_rava.rava_defs import *
+from rng_rava import RAVA_RNG_LED
 from rng_rava.tk import RAVA_SUBAPP
 
 ### VARS
@@ -37,7 +38,11 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
         win_resizable = False
         if not super().__init__(parent, name=name, win_title=win_title, win_geometry=win_geometry, win_resizable=win_resizable):
             return
-
+        
+        # Led and Lamp enabled?
+        self.led_enabled = True if (isinstance(self.rng, RAVA_RNG_LED) and self.rng.led_enabled) else False
+        self.lamp_enabled = True if (self.led_enabled and self.rng.lamp_enabled) else False
+        
         # Widgets
         self.nb = ttk.Notebook(self, padding=PAD)
         self.nb.grid(row=0, column=0, sticky='nsew')
@@ -88,11 +93,11 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
                 self.rng_gen_byte_stream_stop()
 
             # Turn LED off
-            if self.rng.led_enabled and self.rng.led_intensity:
+            if self.led_enabled and self.rng.led_intensity:
                 self.rng.snd_led_intensity_fade(0, 1000)
 
             # LAMP mode off
-            if self.rng.lamp_mode:
+            if self.lamp_enabled and self.rng.lamp_mode:
                 self.rng.snd_lamp_mode(False)
 
         # Close RAVA_SUBAPP
@@ -855,13 +860,13 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
             self.nb.tab(tab_id, state=['disabled'])
 
         # LED
-        if not self.rng.led_enabled:
+        if not self.led_enabled:
             # Disable notebook tab
             tab_id = [tab_id for tab_id in self.nb.tabs() if 'led' in tab_id][0]
             self.nb.tab(tab_id, state=['disabled'])
 
         # LAMP
-        if not (self.rng.led_enabled and self.rng.lamp_enabled):
+        if not self.lamp_enabled:
             # Disable notebook tab
             tab_id = [tab_id for tab_id in self.nb.tabs() if 'lamp' in tab_id][0]
             self.nb.tab(tab_id, state=['disabled'])
@@ -892,7 +897,7 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
             self.cbb_lamp_debug_on.set(lamp_debug)
 
         # Stop lamp
-        if self.rng.lamp_mode:
+        if self.lamp_enabled and self.rng.lamp_mode:
             self.rng.snd_lamp_mode(False)
 
         # Stop bytes stream

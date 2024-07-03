@@ -86,12 +86,12 @@ def find_usb_info(port):
 def version_a_greater_b(v_a, v_b):
     v_ints_a = [int(i) for i in v_a.split('.')]
     v_ints_b = [int(i) for i in v_b.split('.')]
-  
+
     # v_a > v_b?
     for i in range(len(v_ints_a)):
         if v_ints_a[i] > v_ints_b[i]:
-            return True    
-    
+            return True
+
     return False
 
 
@@ -235,8 +235,7 @@ class RAVA_RNG:
 
         # Check Firmware version
         if version_a_greater_b(FIRMWARE_MIN_VERSION, self.firmware_version):
-            self.lg.error('{} Connect: Firmware version v{} is incompatible with the driver'
-                          .format(self.dev_name, self.firmware_version))
+            self.lg.error('{} Connect: Firmware version v{} is incompatible with the driver'.format(self.dev_name, self.firmware_version))
             return False
 
         # Print connection info
@@ -256,6 +255,9 @@ class RAVA_RNG:
             if not self.health_startup_success:
                 self.lg.error('{} Connect: Startup tests failed'.format(self.dev_name))
                 return False
+
+        # Reset Health continuous erros
+        self.get_health_continuous_errors()
 
         return True
 
@@ -1190,8 +1192,7 @@ class RAVA_RNG:
                     return bytes_to_array(ints_bytes, np.float32)
 
 
-    def snd_rng_byte_stream_start(self, n_bytes, stream_interval_ms,
-                                  postproc_id=D_RNG_POSTPROC['NONE']):
+    def snd_rng_byte_stream_start(self, n_bytes, stream_interval_ms, postproc_id=D_RNG_POSTPROC['NONE']):
         if n_bytes == 0:
             self.lg.error('{} RNG Stream: Provide n_bytes > 0'.format(self.dev_name))
             return None
@@ -1207,6 +1208,12 @@ class RAVA_RNG:
             return None
 
         comm = 'RNG_STREAM_START'
+
+        # Make queue empty
+        while not self.serial_data[comm].empty():
+            self.serial_data[comm].get_nowait()
+
+        # Send command
         msg_success = self.snd_rava_msg(comm, [n_bytes, stream_interval_ms, postproc_id], 'HHB')
         if msg_success:
             self.rng_streaming = True
@@ -1243,7 +1250,7 @@ class RAVA_RNG:
 
             elif output_type == 'array':
                     rng_a = bytes_to_array(rng_bytes_a, np.uint8)
-                    rng_b = bytes_to_array(rng_bytes_a, np.uint8)
+                    rng_b = bytes_to_array(rng_bytes_b, np.uint8)
                     return rng_a, rng_b
 
             else:
@@ -1349,14 +1356,14 @@ class RAVA_RNG:
 
     def snd_periph_d2_input_capture(self, on=True):
         comm = 'PERIPH_D2_TIMER3_INPUT_CAPTURE'
-        send_res = self.snd_rava_msg(comm, [on], 'B')
 
-        # Read remaining stream bytes
-        if not on:
-            time.sleep(.2)
+        # Make queue empty
+        if on:
             while not self.serial_data[comm].empty():
-                self.self.serial_data[comm].get_nowait()
-        return send_res
+                self.serial_data[comm].get_nowait()
+
+        # Send command
+        return self.snd_rava_msg(comm, [on], 'B')
 
 
     def get_periph_d2_input_capture(self, timeout=GET_TIMEOUT_S):

@@ -21,3 +21,10 @@
 * Including tk submodule for GUI apps defining RAVA_APP and RAVA_SUBAPP classes
 * Including tk.acq used to evoke the tk acquire subapp via python3 -m rng_rava.tk.acq
 * Including tk.ctrlp used to evoke the tk control panel subapp via python3 -m rng_rava.tk.ctrlp
+
+## v1.2.0
+* Moving configuration functionality from RAVA_APP to new class RAVA_CFG
+* RAVA_APP parameter rava_class allows to choose between RAVA_RNG or RAVA_RNG_LED
+* Changed RAVA_APP default show_on_startup to True; Avoid macos issue of not showing matplotlib plots
+* Fixed a bug in get_rng_byte_stream_data() that was returning the same bytes for both A and B channels
+* snd_rng_byte_stream_start() now empties the queue data

@@ -11,7 +11,7 @@ import rng_rava as rava
 # Variables
 OUT_FILE = True                         # File output
 OUT_PATH = './'                         # Update with the desired output path
-N_BYTES = 1000000                       # 1MB
+N_BYTES = 100000                        # 100KB
 N_CHUNK = 10000                         # Update progress every 10KB
 POSTPROC = 'NONE'                       # No post-processing
 RNG_OUT = 'AB'                          # Generate 2 files, one for each RNG core
