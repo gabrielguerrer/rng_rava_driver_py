@@ -6,15 +6,18 @@ Distributed under the MIT license - See LICENSE for details
 
 """
 The Control Panel sub-application provides an graphical user interface (GUI) for
-testing the core features of the RAVA circuit, including EEPROM, PWM, RNG,
+testing the core features of the RAVA circuit, including EEPROM, PWM BOOST, RNG,
 HEALTH, LED, and LAMP capabilities.
 """
+
+from math import floor
 
 import tkinter as tk
 from tkinter import ttk
 import tkinter.messagebox as tkm
 
 from rng_rava.rava_defs import *
+from rng_rava import __version__ as rng_rava_version
 from rng_rava import RAVA_RNG_LED
 from rng_rava.tk import RAVA_SUBAPP
 
@@ -33,8 +36,8 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
     def __init__(self, parent):
         ## Initialize RAVA_SUBAPP
         name = 'RAVA_SUBAPP CTRL_PANEL'
-        win_title = 'Control Panel'
-        win_geometry = '620x350'
+        win_title = 'Control Panel  v{}'.format(rng_rava_version)
+        win_geometry = '630x370'
         win_resizable = False
         if not super().__init__(parent, name=name, win_title=win_title, win_geometry=win_geometry, win_resizable=win_resizable):
             return
@@ -106,13 +109,13 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
 
     def widgets_eeprom(self):
         self.frm_eeprom.columnconfigure([0,1,2], weight=1)
-        self.frm_eeprom.rowconfigure([0,1], weight=1)
+        self.frm_eeprom.rowconfigure([0,1,2], weight=1)
 
         # firmware
-        self.lbf_eeprom_firmware = ttk.Labelframe(self.frm_eeprom, text='Firmware', padding=(PAD, PAD))
-        self.lbf_eeprom_firmware.grid(row=0, column=0, rowspan=2, sticky='nsew', padx=PAD, pady=PAD)
+        self.lbf_eeprom_firmware = ttk.Labelframe(self.frm_eeprom, text='Firmware', padding=(PAD, PAD/2, PAD, PAD))
+        self.lbf_eeprom_firmware.grid(row=0, column=0, rowspan=3, sticky='nsew', padx=PAD, pady=PAD)
         self.lbf_eeprom_firmware.columnconfigure([0,1], weight=1)
-        self.lbf_eeprom_firmware.rowconfigure([0,2], weight=1)
+        self.lbf_eeprom_firmware.rowconfigure([0,1,2], weight=1)
 
         self.lb_eeprom_firmw_version = ttk.Label(self.lbf_eeprom_firmware, text='Version')
         self.lb_eeprom_firmw_version.grid(row=0, column=0, sticky='w')
@@ -126,12 +129,12 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
         self.lb_eeprom_firmw_modules.grid(row=1, column=0, columnspan=2, sticky='w')
 
         self.var_eeprom_firmw_modules = tk.StringVar(value=[''])
-        self.lbox_eeprom_firmw_modules = tk.Listbox(self.lbf_eeprom_firmware, listvariable=self.var_eeprom_firmw_modules, selectmode='browse', width=16, height=7)
+        self.lbox_eeprom_firmw_modules = tk.Listbox(self.lbf_eeprom_firmware, listvariable=self.var_eeprom_firmw_modules, selectmode='browse', width=18, height=8)
         self.lbox_eeprom_firmw_modules.bind("<<ListboxSelect>>", None)
         self.lbox_eeprom_firmw_modules.grid(row=2, column=0, columnspan=2)
 
         # pwm
-        self.lbf_eeprom_pwm = ttk.Labelframe(self.frm_eeprom, text='PWM', padding=(PAD, PAD))
+        self.lbf_eeprom_pwm = ttk.Labelframe(self.frm_eeprom, text='PWM BOOST', padding=(PAD, PAD/2, PAD, PAD))
         self.lbf_eeprom_pwm.grid(row=0, column=1, sticky='nsew', padx=0, pady=PAD)
         self.lbf_eeprom_pwm.columnconfigure([0,1], weight=1)
         self.lbf_eeprom_pwm.rowconfigure([0,1], weight=1)
@@ -140,19 +143,19 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
         self.lb_eeprom_pwm_freq.grid(row=0, column=0, sticky='w')
 
         self.cbb_eeprom_pwm_freq = ttk.Combobox(self.lbf_eeprom_pwm, width=7)
-        self.cbb_eeprom_pwm_freq.grid(row=0, column=1)
+        self.cbb_eeprom_pwm_freq.grid(row=0, column=1, sticky='e')
         self.cbb_eeprom_pwm_freq.state(['readonly'])
-        self.cbb_eeprom_pwm_freq['values'] = list(D_PWM_FREQ.keys())
+        self.cbb_eeprom_pwm_freq['values'] = list(D_PWM_BOOST_FREQ.keys())
 
         self.lb_eeprom_pwm_duty = ttk.Label(self.lbf_eeprom_pwm, text='Duty Cycle')
         self.lb_eeprom_pwm_duty.grid(row=1, column=0, sticky='w')
 
         self.var_eeprom_pwm_duty = tk.IntVar()
         self.spb_eeprom_pwm_duty = ttk.Spinbox(self.lbf_eeprom_pwm, from_=1, to=255, increment=1, textvariable=self.var_eeprom_pwm_duty, width=4)
-        self.spb_eeprom_pwm_duty.grid(row=1, column=1)
+        self.spb_eeprom_pwm_duty.grid(row=1, column=1, sticky='e')
 
         # rng
-        self.lbf_eeprom_rng = ttk.Labelframe(self.frm_eeprom, text='RNG', padding=(PAD, PAD))
+        self.lbf_eeprom_rng = ttk.Labelframe(self.frm_eeprom, text='RNG', padding=(PAD, PAD/2, PAD, PAD))
         self.lbf_eeprom_rng.grid(row=1, column=1, sticky='nswe', padx=0, pady=(0, PAD))
         self.lbf_eeprom_rng.columnconfigure([0,1], weight=1)
         self.lbf_eeprom_rng.rowconfigure([0], weight=1)
@@ -162,52 +165,72 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
 
         self.var_eeprom_rng_si = tk.IntVar()
         self.spb_eeprom_rng_si = ttk.Spinbox(self.lbf_eeprom_rng, from_=1, to=255, increment=1, textvariable=self.var_eeprom_rng_si, width=4)
-        self.spb_eeprom_rng_si.grid(row=0, column=1)
+        self.spb_eeprom_rng_si.grid(row=0, column=1, sticky='e')
 
         # led
-        self.lbf_eeprom_led = ttk.Labelframe(self.frm_eeprom, text='LED', padding=(PAD, PAD))
-        self.lbf_eeprom_led.grid(row=0, column=2, sticky='nsew', padx=PAD, pady=PAD)
+        self.lbf_eeprom_led = ttk.Labelframe(self.frm_eeprom, text='LED', padding=(PAD, PAD/2, PAD, PAD))
+        self.lbf_eeprom_led.grid(row=2, column=1, sticky='nsew', padx=0, pady=(0, PAD))
         self.lbf_eeprom_led.columnconfigure([0,1], weight=1)
         self.lbf_eeprom_led.rowconfigure([0], weight=1)
 
-        self.lb_eeprom_led_attached = ttk.Label(self.lbf_eeprom_led, text='Attached')
-        self.lb_eeprom_led_attached.grid(row=0, column=0)
+        self.lb_eeprom_led_n = ttk.Label(self.lbf_eeprom_led, text='LED N')
+        self.lb_eeprom_led_n.grid(row=0, column=0, sticky='w')
 
-        self.cbb_eeprom_led_attached = ttk.Combobox(self.lbf_eeprom_led, width=7)
-        self.cbb_eeprom_led_attached.grid(row=0, column=1)
-        self.cbb_eeprom_led_attached['values'] = [True, False]
-        self.cbb_eeprom_led_attached.state(['readonly'])
+        self.var_eeprom_led_n = tk.IntVar()
+        self.spb_eeprom_led_n = ttk.Spinbox(self.lbf_eeprom_led, from_=0, to=255, increment=1, textvariable=self.var_eeprom_led_n, width=4)
+        self.spb_eeprom_led_n.grid(row=0, column=1, sticky='e')
 
         # lamp
-        self.lbf_eeprom_lamp = ttk.Labelframe(self.frm_eeprom, text='LAMP', padding=(PAD, PAD))
-        self.lbf_eeprom_lamp.grid(row=1, column=2, sticky='nsew', padx=PAD, pady=(0, PAD))
+        self.lbf_eeprom_lamp = ttk.Labelframe(self.frm_eeprom, text='LAMP', padding=(PAD, PAD/2, PAD, PAD))
+        self.lbf_eeprom_lamp.grid(row=0, column=2, rowspan=3, sticky='nsew', padx=PAD, pady=PAD)
         self.lbf_eeprom_lamp.columnconfigure([0,1], weight=1)
-        self.lbf_eeprom_lamp.rowconfigure([0,1,2], weight=1)
+        self.lbf_eeprom_lamp.rowconfigure([0,1,2,3,4,5,6], weight=1)
 
-        self.lb_eeprom_lamp_exp_dur = ttk.Label(self.lbf_eeprom_lamp, text='Exp. Duration (s)')
-        self.lb_eeprom_lamp_exp_dur.grid(row=0, column=0, sticky='w')
+        self.lb_eeprom_lamp_movwin_n = ttk.Label(self.lbf_eeprom_lamp, text='MovWin N Trials')
+        self.lb_eeprom_lamp_movwin_n.grid(row=0, column=0, sticky='w')
 
-        self.var_eeprom_lamp_exp_dur = tk.IntVar()
-        self.spb_eeprom_lamp_exp_dur = ttk.Spinbox(self.lbf_eeprom_lamp, from_=60, to=6000, increment=1, textvariable=self.var_eeprom_lamp_exp_dur, width=5)
-        self.spb_eeprom_lamp_exp_dur.grid(row=0, column=1)
+        self.var_eeprom_lamp_movwin_n = tk.IntVar()
+        self.spb_eeprom_lamp_movwin_n = ttk.Spinbox(self.lbf_eeprom_lamp, from_=10, to=1200, increment=1, textvariable=self.var_eeprom_lamp_movwin_n, width=5)
+        self.spb_eeprom_lamp_movwin_n.grid(row=0, column=1)
 
-        self.lb_eeprom_lamp_z_sig = ttk.Label(self.lbf_eeprom_lamp, text='Z-score sig.')
-        self.lb_eeprom_lamp_z_sig.grid(row=1, column=0, sticky='w')
+        self.lb_eeprom_lamp_exp_deltahits = ttk.Label(self.lbf_eeprom_lamp, text='Delta Hits SigEvt')
+        self.lb_eeprom_lamp_exp_deltahits.grid(row=1, column=0, sticky='w')
 
-        self.var_eeprom_lamp_z_sig = tk.DoubleVar()
-        self.spb_eeprom_lamp_z_sig = ttk.Spinbox(self.lbf_eeprom_lamp, from_=1, to=5, increment=0.05, textvariable=self.var_eeprom_lamp_z_sig, width=5)
-        self.spb_eeprom_lamp_z_sig.grid(row=1, column=1)
+        self.var_eeprom_lamp_exp_deltahits = tk.IntVar()
+        self.spb_eeprom_lamp_exp_deltahits = ttk.Spinbox(self.lbf_eeprom_lamp, from_=1, to=1000, increment=1, textvariable=self.var_eeprom_lamp_exp_deltahits, width=5)
+        self.spb_eeprom_lamp_exp_deltahits.grid(row=1, column=1)
 
-        self.lb_eeprom_lamp_mag_smooth = ttk.Label(self.lbf_eeprom_lamp, text='Mag. smooth')
-        self.lb_eeprom_lamp_mag_smooth.grid(row=2, column=0, sticky='w')
+        self.lb_eeprom_lamp_exp_dur_max = ttk.Label(self.lbf_eeprom_lamp, text='Exp Dur Max (s)')
+        self.lb_eeprom_lamp_exp_dur_max.grid(row=2, column=0, sticky='w')
+
+        self.var_eeprom_lamp_exp_dur_max_s = tk.IntVar()
+        self.spb_eeprom_lamp_exp_dur_max = ttk.Spinbox(self.lbf_eeprom_lamp, from_=10, to=6000, increment=30., textvariable=self.var_eeprom_lamp_exp_dur_max_s, width=5)
+        self.spb_eeprom_lamp_exp_dur_max.grid(row=2, column=1)
+
+        self.lb_eeprom_lamp_mag_smooth = ttk.Label(self.lbf_eeprom_lamp, text='Mag N Smooth')
+        self.lb_eeprom_lamp_mag_smooth.grid(row=3, column=0, sticky='w')
 
         self.var_eeprom_lamp_mag_smooth = tk.IntVar()
         self.spb_eeprom_lamp_mag_smooth = ttk.Spinbox(self.lbf_eeprom_lamp, from_=1, to=1000, increment=1, textvariable=self.var_eeprom_lamp_mag_smooth, width=5)
-        self.spb_eeprom_lamp_mag_smooth.grid(row=2, column=1)
+        self.spb_eeprom_lamp_mag_smooth.grid(row=3, column=1)
+
+        self.lb_eeprom_lamp_mag_colchg = ttk.Label(self.lbf_eeprom_lamp, text='Mag ColChg Thld')
+        self.lb_eeprom_lamp_mag_colchg.grid(row=4, column=0, sticky='w')
+
+        self.var_eeprom_lamp_mag_colchg = tk.IntVar()
+        self.spb_eeprom_lamp_mag_colchg = ttk.Spinbox(self.lbf_eeprom_lamp, from_=0, to=255, increment=10, textvariable=self.var_eeprom_lamp_mag_colchg, width=5)
+        self.spb_eeprom_lamp_mag_colchg.grid(row=4, column=1)
+
+        self.lb_eeprom_lamp_sound_vol = ttk.Label(self.lbf_eeprom_lamp, text='Sound Vol (%)')
+        self.lb_eeprom_lamp_sound_vol.grid(row=5, column=0, sticky='w')
+
+        self.var_eeprom_lamp_sound_vol = tk.IntVar()
+        self.spb_eeprom_lamp_sound_vol = ttk.Spinbox(self.lbf_eeprom_lamp, from_=0, to=100, increment=10., textvariable=self.var_eeprom_lamp_sound_vol, width=5)
+        self.spb_eeprom_lamp_sound_vol.grid(row=5, column=1)
 
         # buttons
         self.frm_eeprom_buttons = ttk.Frame(self.frm_eeprom, padding=(PAD, 0, PAD, PAD))
-        self.frm_eeprom_buttons.grid(row=2, column=0, columnspan=3, sticky='nsew')
+        self.frm_eeprom_buttons.grid(row=3, column=0, columnspan=3, sticky='nsew')
         self.frm_eeprom_buttons.columnconfigure([0,1,2], weight=1)
         self.frm_eeprom_buttons.rowconfigure([0], weight=1)
 
@@ -232,15 +255,15 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
         self.lbf_rng_setup.columnconfigure([0,1,2,3], weight=1)
         self.lbf_rng_setup.rowconfigure([0,1], weight=1)
 
-        self.lb_pwm_freq = ttk.Label(self.lbf_rng_setup, text='PWM Freq.')
+        self.lb_pwm_freq = ttk.Label(self.lbf_rng_setup, text='PWM_B Freq.')
         self.lb_pwm_freq.grid(row=0, column=0, sticky='w')
 
         self.cbb_pwm_freq = ttk.Combobox(self.lbf_rng_setup, width=7)
         self.cbb_pwm_freq.grid(row=0, column=1)
         self.cbb_pwm_freq.state(['readonly'])
-        self.cbb_pwm_freq['values'] = list(D_PWM_FREQ.keys())
+        self.cbb_pwm_freq['values'] = list(D_PWM_BOOST_FREQ.keys())
 
-        self.lb_pwm_duty = ttk.Label(self.lbf_rng_setup, text='PWM Duty')
+        self.lb_pwm_duty = ttk.Label(self.lbf_rng_setup, text='PWM_B Duty')
         self.lb_pwm_duty.grid(row=0, column=2)
 
         self.var_pwm_duty = tk.IntVar()
@@ -389,7 +412,7 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
         self.lb_rng_stream_interval.grid(row=1, column=0, sticky='w')
 
         self.var_rng_stream_interval = tk.IntVar(value=200)
-        self.spb_rng_stream_interval = ttk.Spinbox(self.frm_rng_stream, from_=1, to=RNG_BYTE_STREAM_MAX_INTERVAL_MS, increment=100, textvariable=self.var_rng_stream_interval, width=4)
+        self.spb_rng_stream_interval = ttk.Spinbox(self.frm_rng_stream, from_=10, to=RNG_BYTE_STREAM_MAX_INTERVAL_MS, increment=100, textvariable=self.var_rng_stream_interval, width=4)
         self.spb_rng_stream_interval.grid(row=1, column=1)
 
         self.lb_rng_stream_byte_pp = ttk.Label(self.frm_rng_stream, text='Post Proc.')
@@ -588,7 +611,7 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
         self.frm_periph_d3 = ttk.Frame(self.frm_periph, padding=(PAD, PAD))
         self.frm_periph_d3.grid(row=0, column=0, sticky='nsew', padx=(0, PAD), pady=(0, PAD))
         self.frm_periph_d3.columnconfigure([0,1,2], weight=1)
-        self.frm_periph_d3.rowconfigure([0,1,2,3,4], weight=1)
+        self.frm_periph_d3.rowconfigure([0,1,2,3,4,5], weight=1)
 
         self.lb_periph_d3_trigger_out_interval = ttk.Label(self.frm_periph_d3, text='Trigger Output\nInterval (ms)')
         self.lb_periph_d3_trigger_out_interval.grid(row=0, column=0, sticky='w')
@@ -608,35 +631,59 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
         self.lb_periph_d3_pwm.grid(row=1, column=0, sticky='w')
 
         self.cbb_periph_d3_pwm_on = ttk.Combobox(self.frm_periph_d3, width=5)
-        self.cbb_periph_d3_pwm_on.grid(row=1, column=2)
+        self.cbb_periph_d3_pwm_on.grid(row=2, column=0, sticky='w')
         self.cbb_periph_d3_pwm_on.state(['readonly'])
         self.cbb_periph_d3_pwm_on['values'] = ['On', 'Off']
         self.cbb_periph_d3_pwm_on.set('Off')
         self.cbb_periph_d3_pwm_on.bind('<<ComboboxSelected>>', self.periph_d3_pwm)
 
         self.lb_periph_d3_pwm_presc = ttk.Label(self.frm_periph_d3, text='Prescaler')
-        self.lb_periph_d3_pwm_presc.grid(row=2, column=1, sticky='w')
+        self.lb_periph_d3_pwm_presc.grid(row=1, column=1, sticky='w')
 
         self.var_periph_d3_pwm_presc = tk.IntVar(value=1)
         self.cbb_periph_d3_pwm_presc = ttk.Combobox(self.frm_periph_d3, width=5, textvariable=self.var_periph_d3_pwm_presc)
-        self.cbb_periph_d3_pwm_presc.grid(row=2, column=2)
+        self.cbb_periph_d3_pwm_presc.grid(row=1, column=2)
         self.cbb_periph_d3_pwm_presc.state(['readonly'])
         self.cbb_periph_d3_pwm_presc['values'] = list(range(1,5+1))
         self.cbb_periph_d3_pwm_presc.bind('<<ComboboxSelected>>', self.periph_d3_pwm)
 
         self.lb_periph_d3_pwm_top = ttk.Label(self.frm_periph_d3, text='Top')
-        self.lb_periph_d3_pwm_top.grid(row=3, column=1, sticky='w')
+        self.lb_periph_d3_pwm_top.grid(row=2, column=1, sticky='w')
 
         self.var_periph_d3_pwm_top = tk.IntVar(value=65535)
         self.spb_periph_d3_pwm_top = ttk.Spinbox(self.frm_periph_d3, from_=1, to=65535, increment=1000, textvariable=self.var_periph_d3_pwm_top, width=5, command=self.periph_d3_pwm)
-        self.spb_periph_d3_pwm_top.grid(row=3, column=2)
+        self.spb_periph_d3_pwm_top.grid(row=2, column=2)
 
         self.lb_periph_d3_pwm_duty = ttk.Label(self.frm_periph_d3, text='Duty (%)')
-        self.lb_periph_d3_pwm_duty.grid(row=4, column=1, sticky='w')
+        self.lb_periph_d3_pwm_duty.grid(row=3, column=1, sticky='w')
 
         self.var_periph_d3_pwm_duty = tk.DoubleVar(value=10)
         self.spb_periph_d3_pwm_duty = ttk.Spinbox(self.frm_periph_d3, from_=1, to=100, increment=5, textvariable=self.var_periph_d3_pwm_duty, width=5, command=self.periph_d3_pwm)
-        self.spb_periph_d3_pwm_duty.grid(row=4, column=2)
+        self.spb_periph_d3_pwm_duty.grid(row=3, column=2)
+
+        self.lb_periph_d3_sound = ttk.Label(self.frm_periph_d3, text='Sound')
+        self.lb_periph_d3_sound.grid(row=4, column=0, sticky='w')
+
+        self.cbb_periph_d3_sound = ttk.Combobox(self.frm_periph_d3, width=5)
+        self.cbb_periph_d3_sound.grid(row=5, column=0, sticky='w')
+        self.cbb_periph_d3_sound.state(['readonly'])
+        self.cbb_periph_d3_sound['values'] = ['On', 'Off']
+        self.cbb_periph_d3_sound.set('Off')
+        self.cbb_periph_d3_sound.bind('<<ComboboxSelected>>', self.periph_d3_sound)
+
+        self.lb_periph_d3_sound_freq = ttk.Label(self.frm_periph_d3, text='Freq (Hz)')
+        self.lb_periph_d3_sound_freq.grid(row=4, column=1, sticky='w')
+
+        self.var_periph_d3_sound_freq = tk.IntVar(value=440)
+        self.spb_periph_d3_sound_freq = ttk.Spinbox(self.frm_periph_d3, from_=0, to=10000, increment=10, textvariable=self.var_periph_d3_sound_freq, width=5, command=self.periph_d3_sound)
+        self.spb_periph_d3_sound_freq.grid(row=4, column=2)
+
+        self.lb_periph_d3_sound_vol = ttk.Label(self.frm_periph_d3, text='Volume (%)')
+        self.lb_periph_d3_sound_vol.grid(row=5, column=1, sticky='w')
+
+        self.var_periph_d3_sound_vol = tk.IntVar(value=100)
+        self.spb_periph_d3_sound_vol = ttk.Spinbox(self.frm_periph_d3, from_=0, to=100, increment=10, textvariable=self.var_periph_d3_sound_vol, width=5, command=self.periph_d3_sound)
+        self.spb_periph_d3_sound_vol.grid(row=5, column=2)
 
         # D4
         self.frm_periph_d4 = ttk.Frame(self.frm_periph, padding=(PAD, PAD))
@@ -769,7 +816,7 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
         self.scl_led_int.grid(row=0, column=0, columnspan=2)
 
         self.var_led_int_spb = tk.IntVar(value=0)
-        self.spb_led_int = ttk.Spinbox(self.lbf_led_intensity, from_=0, to=255, increment=10, textvariable=self.var_led_int_spb, width=5, command=self.led_intensity_spb)
+        self.spb_led_int = ttk.Spinbox(self.lbf_led_intensity, from_=0, to=255, increment=8, textvariable=self.var_led_int_spb, width=5, command=self.led_intensity_spb)
         self.spb_led_int.grid(row=0, column=2)
 
         self.lb_led_int_fade = ttk.Label(self.lbf_led_intensity, text='Fade Dur. (ms)')
@@ -914,8 +961,8 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
             modules_enabled = [m.replace('_enabled', '') for m in modules_enabled]
             self.var_eeprom_firmw_modules.set(modules_enabled)
 
-        # PWM
-        pwm = self.rng.get_eeprom_pwm()
+        # PWM BOOST
+        pwm = self.rng.get_eeprom_pwm_boost()
         self.cbb_eeprom_pwm_freq.set(pwm['freq_str'])
         self.var_eeprom_pwm_duty.set(pwm['duty'])
 
@@ -924,44 +971,49 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
         self.var_eeprom_rng_si.set(rng['sampling_interval_us'])
 
         # LED
-        if self.rng.led_enabled:
-            led = self.rng.get_eeprom_led()
-            self.cbb_eeprom_led_attached.set('True' if led['led_attached'] else 'False')
+        led = self.rng.get_eeprom_led()
+        self.var_eeprom_led_n.set(led['led_n'])
 
         # LAMP
-        if self.rng.led_enabled and self.rng.lamp_enabled:
-            lamp = self.rng.get_eeprom_lamp()
-            self.var_eeprom_lamp_exp_dur.set(lamp['exp_dur_max_ms'] // 1000)
-            self.var_eeprom_lamp_z_sig.set('{:.3f}'.format(lamp['exp_z_significant']))
-            self.var_eeprom_lamp_mag_smooth.set(lamp['exp_mag_smooth_n_trials'])
+        lamp_data = self.rng.get_eeprom_lamp()
+        self.var_eeprom_lamp_movwin_n.set(lamp_data['exp_movwin_n_trials'])
+        self.var_eeprom_lamp_exp_deltahits.set(lamp_data['exp_deltahits_sigevt'])
+        self.var_eeprom_lamp_exp_dur_max_s.set(lamp_data['exp_dur_max_s'])
+        self.var_eeprom_lamp_mag_smooth.set(lamp_data['exp_mag_smooth_n_trials'])
+        self.var_eeprom_lamp_mag_colchg.set(lamp_data['exp_mag_colorchg_thld'])
+        self.var_eeprom_lamp_sound_vol.set(int(round(lamp_data['sound_volume'] / 255 * 100)))
 
 
     def eeprom_set(self):
-        if tkm.askyesno(message=('Save parameters to EEPROM?'), detail=''):
-            # PWM
+        if tkm.askyesno(parent=self, message=('Save parameters to EEPROM?'), detail=''):
+            # PWM BOOST
             freq_str = self.cbb_eeprom_pwm_freq.get()
             duty = self.var_eeprom_pwm_duty.get()
-            self.rng.snd_eeprom_pwm(D_PWM_FREQ[freq_str], duty)
+            self.rng.snd_eeprom_pwm_boost(freq_id=D_PWM_BOOST_FREQ[freq_str], duty=duty)
 
             # RNG
             sampling_interval_us = self.var_eeprom_rng_si.get()
-            self.rng.snd_eeprom_rng(sampling_interval_us)
+            self.rng.snd_eeprom_rng(sampling_interval_us=sampling_interval_us)
 
             # LED
-            if self.rng.led_enabled:
-                led_attached = True if self.cbb_eeprom_led_attached.get() == 'True' else False
-                self.rng.snd_eeprom_led(led_attached)
+            led_n = self.var_eeprom_led_n.get()
+            self.rng.snd_eeprom_led(led_n=led_n)
 
             # LAMP
-            if self.rng.led_enabled and self.rng.lamp_enabled:
-                exp_dur_max_ms = self.var_eeprom_lamp_exp_dur.get() * 1000
-                exp_z_significant = self.var_eeprom_lamp_z_sig.get()
-                exp_mag_smooth_n_trials = self.var_eeprom_lamp_mag_smooth.get()
-                self.rng.snd_eeprom_lamp(exp_dur_max_ms, exp_z_significant, exp_mag_smooth_n_trials)
+            exp_movwin_n_trials = self.var_eeprom_lamp_movwin_n.get()
+            exp_deltahits_sigevt = self.var_eeprom_lamp_exp_deltahits.get()
+            exp_dur_max_s = self.var_eeprom_lamp_exp_dur_max_s.get()
+            exp_mag_smooth_n_trials = self.var_eeprom_lamp_mag_smooth.get()
+            exp_mag_colorchg_thld = self.var_eeprom_lamp_mag_colchg.get()
+            exp_mag_colorchg_thld = exp_mag_colorchg_thld if exp_mag_colorchg_thld <= 255 else 255
+            sound_vol = self.var_eeprom_lamp_sound_vol.get()
+            sound_vol = sound_vol if sound_vol <= 100 else 100
+            sound_vol = int(round(sound_vol / 100 * 255))
+            self.rng.snd_eeprom_lamp(exp_movwin_n_trials, exp_deltahits_sigevt, exp_dur_max_s, exp_mag_smooth_n_trials, exp_mag_colorchg_thld, sound_vol)
 
 
     def eeprom_set_defaults(self):
-        if tkm.askyesno(message=('Restore EEPROM to default values?'), detail=''):
+        if tkm.askyesno(parent=self, message=('Restore EEPROM to default values?'), detail=''):
             self.rng.snd_eeprom_reset_to_default()
             self.eeprom_get()
 
@@ -976,8 +1028,8 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
 
 
     def rng_setup_get(self):
-        # PWM
-        pwm = self.rng.get_pwm_setup()
+        # PWM BOOST
+        pwm = self.rng.get_pwm_boost_setup()
         self.cbb_pwm_freq.set(pwm['freq_str'])
         self.var_pwm_duty.set(pwm['duty'])
 
@@ -987,10 +1039,10 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
 
 
     def rng_setup_set(self):
-        # PWM
+        # PWM BOOST
         freq_str = self.cbb_pwm_freq.get()
         duty = self.var_pwm_duty.get()
-        self.rng.snd_pwm_setup(D_PWM_FREQ[freq_str], duty)
+        self.rng.snd_pwm_boost_setup(D_PWM_BOOST_FREQ[freq_str], duty)
 
         # RNG
         sampling_interval_us = self.var_rng_si.get()
@@ -1105,6 +1157,9 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
         if interval_ms > RNG_BYTE_STREAM_MAX_INTERVAL_MS:
             interval_ms = RNG_BYTE_STREAM_MAX_INTERVAL_MS
             self.var_rng_stream_interval.set(RNG_BYTE_STREAM_MAX_INTERVAL_MS)
+        if interval_ms < 10:
+            interval_ms = 10 # Avoids a problem with the GUI interface which can't update fast enough
+            self.var_rng_stream_interval.set(interval_ms)
 
         postproc = self.cbb_rng_stream_byte_pp.get()
         postproc_id = D_RNG_POSTPROC[postproc]
@@ -1277,9 +1332,23 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
 
         freq_prescaler = self.var_periph_d3_pwm_presc.get()
         top = self.var_periph_d3_pwm_top.get()
-        duty = int(self.var_periph_d3_pwm_duty.get()/100 * 65535)
+
+        duty = self.var_periph_d3_pwm_duty.get()
+        duty = 100 if duty > 100 else duty
+        duty = int(duty/100 * 65535)
 
         self.rng.snd_periph_d3_timer3_pwm(freq_prescaler, top, duty, on)
+
+
+    def periph_d3_sound(self, tk_event=None):
+        on = True if self.cbb_periph_d3_sound.get() == 'On' else False
+
+        freq_hz = self.var_periph_d3_sound_freq.get()
+        volume = self.var_periph_d3_sound_vol.get()
+        volume = 100 if volume > 100 else volume
+        volume = int(volume/100 * 255)
+
+        self.rng.snd_periph_d3_timer3_sound(freq_hz, volume, on)
 
 
     def periph_d4_pin_change(self, tk_event=None):
@@ -1380,9 +1449,10 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
 
     def lamp_debug_data(self):
         dbg_dict = self.rng.get_lamp_debug_data()
+        elapsed_s = floor(dbg_dict['trial_i'] * LAMP_TICK_INTERVAL_MS / 1000)
 
-        debug_str = 'LAMP Debug\n\nz={:+1.2f}, mag={:3.0f}, mag_avg={:3.0f}'\
-                    .format(dbg_dict['z'], dbg_dict['mag'], dbg_dict['mag_avg'])
+        debug_str = 'LAMP Debug\n\nz_score    = {:+1.2f}\ndelta_hits = {:+}\nmag_avg    = {}\n\nElapsed {:.0f}s'\
+                    .format(dbg_dict['z_score'], dbg_dict['delta_hits'], dbg_dict['mag_avg'], elapsed_s)
         self.lamp_output_set(debug_str)
 
 
@@ -1390,20 +1460,19 @@ class RAVA_SUBAPP_CTRL_PANEL(RAVA_SUBAPP):
         stats = self.rng.get_lamp_statistics()
         exp_n = stats['exp_n']
 
-        if exp_n:
-            res_str = 'LAMP Statistics\n\n'\
-                      'Total of {} experiments, where {} ({:.2f}%) reached statistical significance\n\n'\
-                      'Color distribution (%):\n'\
-                      '  R={:.2f} O={:.2f} Y={:.2f} G={:.2f}\n'\
-                      '  C={:.2f} B={:.2f} PU={:.2f} PI={:.2f}\n'\
-                      .format(exp_n, stats['exp_n_zsig'], stats['exp_n_zsig']/exp_n*100,
-                              stats['red']/exp_n*100, stats['orange']/exp_n*100, stats['yellow']/exp_n*100,
-                              stats['green']/exp_n*100, stats['cyan']/exp_n*100, stats['blue']/exp_n*100,
-                              stats['purple']/exp_n*100, stats['pink']/exp_n*100)
+        res_str = 'LAMP Statistics\n\n'\
 
+        if exp_n:
+            res_str += 'Total of {} experiments, where {} ({:.2f}%) reached statistical significance\n\n'\
+                       'Color distribution (%):\n'\
+                       '  R={:.2f} O={:.2f} Y={:.2f} G={:.2f}\n'\
+                       '  C={:.2f} B={:.2f} PU={:.2f} PI={:.2f}\n'\
+                       .format(exp_n, stats['exp_n_zsig'], stats['exp_n_zsig']/exp_n*100,
+                               stats['red']/exp_n*100, stats['orange']/exp_n*100, stats['yellow']/exp_n*100,
+                               stats['green']/exp_n*100, stats['cyan']/exp_n*100, stats['blue']/exp_n*100,
+                               stats['purple']/exp_n*100, stats['pink']/exp_n*100)
         else:
-            res_str = 'LAMP Statistics\n\n'\
-                      'No experiment recorded'
+            res_str += 'No experiment recorded'
 
         self.lamp_output_set(res_str)
 

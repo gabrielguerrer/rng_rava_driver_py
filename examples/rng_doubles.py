@@ -29,12 +29,12 @@ def get_rng_doubles(n_doubles):
         return
     rnd_bytes_a, rnd_bytes_b = bytes_res
 
-    # XOR them
+    # XOR them    
     rnd_bytes = np.bitwise_xor(rnd_bytes_a, rnd_bytes_b).tobytes()
-
-    # Convert bytes to ints
+    
+    # Convert bytes to ints    
     rnd_ints = np.frombuffer(rnd_bytes, dtype=np.uint64)
-
+    
     # IEEE754 bit pattern for single precision floating point value in the
     # range of 1.0 - 2.0. Uses the first 52 bits and fixes the float
     # exponent to 1023

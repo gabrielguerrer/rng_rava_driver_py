@@ -30,7 +30,6 @@ def DEVICE():
     rng.close()
 
     rng.get_device_serial_number()
-    rng.get_device_temperature()
     rng.get_device_free_ram()
 
     rng.snd_device_reboot()
@@ -40,18 +39,14 @@ def EEPROM():
 
     rng.snd_eeprom_reset_to_default()
 
-    rng.get_eeprom_device()
-    rng.snd_eeprom_device(temp_calib_slope=397, temp_calib_intercept=-280)
-    rng.snd_eeprom_device(temp_calib_slope=1, temp_calib_intercept=0)
-
     rng.get_eeprom_firmware()
 
-    rng.get_eeprom_pwm()
-    rng.snd_eeprom_pwm(freq_id=rava.D_PWM_FREQ['30_KHZ'], duty=12)
-    rng.snd_eeprom_pwm(freq_id=rava.D_PWM_FREQ['40_KHZ'], duty=12)
-    rng.snd_eeprom_pwm(freq_id=rava.D_PWM_FREQ['50_KHZ'], duty=20)
-    rng.snd_eeprom_pwm(freq_id=rava.D_PWM_FREQ['60_KHZ'], duty=25)
-    rng.snd_eeprom_pwm(freq_id=rava.D_PWM_FREQ['75_KHZ'], duty=25)
+    rng.get_eeprom_pwm_boost()
+    rng.snd_eeprom_pwm_boost(freq_id=rava.D_PWM_BOOST_FREQ['30_KHZ'], duty=12)
+    rng.snd_eeprom_pwm_boost(freq_id=rava.D_PWM_BOOST_FREQ['40_KHZ'], duty=12)
+    rng.snd_eeprom_pwm_boost(freq_id=rava.D_PWM_BOOST_FREQ['50_KHZ'], duty=20)
+    rng.snd_eeprom_pwm_boost(freq_id=rava.D_PWM_BOOST_FREQ['60_KHZ'], duty=25)
+    rng.snd_eeprom_pwm_boost(freq_id=rava.D_PWM_BOOST_FREQ['75_KHZ'], duty=25)
 
     rng.get_eeprom_rng()
     rng.snd_eeprom_rng(sampling_interval_us=5)
@@ -59,23 +54,21 @@ def EEPROM():
     rng.snd_eeprom_rng(sampling_interval_us=15)
 
     rng.get_eeprom_led()
-    rng.snd_eeprom_led(led_attached=False)
-    rng.snd_eeprom_led(led_attached=True)
+    rng.snd_eeprom_led(led_n=16)
 
     rng.get_eeprom_lamp()
-    rng.snd_eeprom_lamp(exp_dur_max_ms=5*60*1000, exp_z_significant=3.925, exp_mag_smooth_n_trials=20)
-    rng.snd_eeprom_lamp(exp_dur_max_ms=1*60*1000, exp_z_significant=3.925, exp_mag_smooth_n_trials=10)
+    rng.snd_eeprom_lamp(exp_movwin_n_trials=600, exp_deltahits_sigevt=94, exp_dur_max_s=300, exp_mag_smooth_n_trials=70, exp_mag_colorchg_thld=207, sound_volume=153)
 
 
 def PWM():
 
-    rng.get_pwm_setup()
+    rng.get_pwm_boost_setup()
 
-    rng.snd_pwm_setup(freq_id=rava.D_PWM_FREQ['30_KHZ'], duty=12)
-    rng.snd_pwm_setup(freq_id=rava.D_PWM_FREQ['40_KHZ'], duty=12)
-    rng.snd_pwm_setup(freq_id=rava.D_PWM_FREQ['50_KHZ'], duty=20)
-    rng.snd_pwm_setup(freq_id=rava.D_PWM_FREQ['60_KHZ'], duty=25)
-    rng.snd_pwm_setup(freq_id=rava.D_PWM_FREQ['75_KHZ'], duty=25)
+    rng.snd_pwm_boost_setup(freq_id=rava.D_PWM_BOOST_FREQ['30_KHZ'], duty=12)
+    rng.snd_pwm_boost_setup(freq_id=rava.D_PWM_BOOST_FREQ['40_KHZ'], duty=12)
+    rng.snd_pwm_boost_setup(freq_id=rava.D_PWM_BOOST_FREQ['50_KHZ'], duty=20)
+    rng.snd_pwm_boost_setup(freq_id=rava.D_PWM_BOOST_FREQ['60_KHZ'], duty=25)
+    rng.snd_pwm_boost_setup(freq_id=rava.D_PWM_BOOST_FREQ['75_KHZ'], duty=25)
 
 
 def RNG():
@@ -108,7 +101,8 @@ def RNG():
     rng.get_rng_floats(n_floats=15)
 
     rng.get_rng_byte_stream_status()
-    rng.snd_rng_byte_stream_start(n_bytes=10, stream_interval_ms=200, postproc_id=rava.D_RNG_POSTPROC['NONE'])
+    rng.snd_rng_byte_stream_start(n_bytes=100, stream_interval_ms=100, postproc_id=rava.D_RNG_POSTPROC['NONE'])
+    rng.snd_rng_byte_stream_start(n_bytes=10, stream_interval_ms=0, postproc_id=rava.D_RNG_POSTPROC['NONE'])
     rng.get_rng_byte_stream_data(output_type='array')
     rng.snd_rng_byte_stream_stop()
 
@@ -189,6 +183,11 @@ def PERIPHERALS():
     rng.snd_periph_d3_timer3_pwm(freq_prescaler=1, top=2**5-1, duty=10)
     rng.snd_periph_d3_timer3_pwm(on=False)
 
+    rng.snd_periph_d3_timer3_sound(freq_hz=220, volume=255)
+    rng.snd_periph_d3_timer3_sound(freq_hz=440, volume=255)
+    rng.snd_periph_d3_timer3_sound(freq_hz=880, volume=255)
+    rng.snd_periph_d3_timer3_sound(freq_hz=0)
+
     rng.snd_periph_d4_pin_change(on=True)
     rng.snd_periph_d4_pin_change(on=False)
 
@@ -209,6 +208,7 @@ def LED():
     rng.snd_led_color(color_hue=rava.D_LED_COLOR['ORANGE'], intensity=255)
     rng.snd_led_color(color_hue=rava.D_LED_COLOR['YELLOW'], intensity=255)
     rng.snd_led_color(color_hue=rava.D_LED_COLOR['GREEN'], intensity=255)
+    rng.snd_led_color(color_hue=rava.D_LED_COLOR['CYAN'], intensity=255)
     rng.snd_led_color(color_hue=rava.D_LED_COLOR['BLUE'], intensity=255)
     rng.snd_led_color(color_hue=rava.D_LED_COLOR['PURPLE'], intensity=255)
     rng.snd_led_color(color_hue=rava.D_LED_COLOR['PINK'], intensity=255)
@@ -217,16 +217,18 @@ def LED():
     rng.snd_led_color_fade(color_hue_tgt=rava.D_LED_COLOR['ORANGE'], duration_ms=1000)
     rng.snd_led_color_fade(color_hue_tgt=rava.D_LED_COLOR['YELLOW'], duration_ms=1000)
     rng.snd_led_color_fade(color_hue_tgt=rava.D_LED_COLOR['GREEN'], duration_ms=1000)
+    rng.snd_led_color_fade(color_hue_tgt=rava.D_LED_COLOR['CYAN'], duration_ms=1000)
     rng.snd_led_color_fade(color_hue_tgt=rava.D_LED_COLOR['BLUE'], duration_ms=1000)
+    rng.snd_led_color_fade(color_hue_tgt=rava.D_LED_COLOR['PURPLE'], duration_ms=1000)
     rng.snd_led_color_fade(color_hue_tgt=rava.D_LED_COLOR['PINK'], duration_ms=1000)
 
-    rng.snd_led_color_oscillate(n_cycles=3, duration_ms=3000)
+    rng.snd_led_color_oscillate(n_cycles=3, duration_ms=4000)
     rng.snd_led_color_oscillate(n_cycles=10, duration_ms=10000)
 
     rng.snd_led_intensity(intensity=0)
     rng.snd_led_intensity(intensity=63)
     rng.snd_led_intensity(intensity=127)
-    rng.snd_led_intensity(intensity=190)
+    rng.snd_led_intensity(intensity=191)
     rng.snd_led_intensity(intensity=255)
 
     rng.snd_led_intensity_fade(intensity_tgt=0, duration_ms=1000)

@@ -58,6 +58,7 @@ import serial
 from serial.tools.list_ports import comports
 import numpy as np
 
+from rng_rava import __version__ as rng_rava_version
 from rng_rava.rava_defs import *
 
 
@@ -235,14 +236,17 @@ class RAVA_RNG:
 
         # Check Firmware version
         if version_a_greater_b(FIRMWARE_MIN_VERSION, self.firmware_version):
-            self.lg.error('{} Connect: Firmware version v{} is incompatible with the driver'.format(self.dev_name, self.firmware_version))
+            self.lg.error('{} Connect: Firmware version v{} is incompatible with driver v{}'.format(self.dev_name, self.firmware_version, rng_rava_version))
+            self.close()
             return False
 
         # Print connection info
         self.lg.info('{} Connect: Success'
-                '\n{}  {}, Firmware v{}, SN={}, at {}'
-                .format(self.dev_name, LOG_FILL,
-                        self.dev_usb_name, self.firmware_version, self.dev_serial_number, self.serial.port))
+                '\n{}  SN={} at {}'
+                '\n{}  Firmware v{},  Driver v{}'
+                .format(self.dev_name,
+                        LOG_FILL, self.dev_serial_number, self.serial.port,
+                        LOG_FILL, self.firmware_version, rng_rava_version))
 
         # Request Health startup info
         if self.health_startup_enabled:
@@ -512,11 +516,6 @@ class RAVA_RNG:
             sn = self.read_serial(sn_n_bytes).decode()
             self.put_queue_data('DEVICE_SERIAL_NUMBER', sn)
 
-        # DEVICE_TEMPERATURE
-        elif comm_id == D_DEV_COMM['DEVICE_TEMPERATURE']:
-            # temperature
-            self.put_queue_data('DEVICE_TEMPERATURE', self.unpack_rava_msgdata(comm_data, 'f'))
-
         # DEVICE_FREE_RAM
         elif comm_id == D_DEV_COMM['DEVICE_FREE_RAM']:
             # free_ram
@@ -528,20 +527,16 @@ class RAVA_RNG:
             debug_ints = [x for x in debug_bytes]
             self.lg.debug('> RAVA DEBUG MSG {} {} {} {} {} {}'.format(*debug_ints))
 
-        # EEPROM_DEVICE
-        elif comm_id == D_DEV_COMM['EEPROM_DEVICE']:
-            # temp_calib_slope, temp_calib_intercept
-            self.put_queue_data('EEPROM_DEVICE', self.unpack_rava_msgdata(comm_data, 'Hh'))
 
         # EEPROM_FIRMWARE
         elif comm_id == D_DEV_COMM['EEPROM_FIRMWARE']:
             # version_major, version_minor, version_patch, modules
             self.put_queue_data('EEPROM_FIRMWARE', self.unpack_rava_msgdata(comm_data, 'BBBB'))
 
-        # EEPROM_PWM
-        elif comm_id == D_DEV_COMM['EEPROM_PWM']:
+        # EEPROM_PWM_BOOST
+        elif comm_id == D_DEV_COMM['EEPROM_PWM_BOOST']:
             # freq_id, duty
-            self.put_queue_data('EEPROM_PWM', self.unpack_rava_msgdata(comm_data, 'BB'))
+            self.put_queue_data('EEPROM_PWM_BOOST', self.unpack_rava_msgdata(comm_data, 'BB'))
 
         # EEPROM_RNG
         elif comm_id == D_DEV_COMM['EEPROM_RNG']:
@@ -550,23 +545,23 @@ class RAVA_RNG:
 
         # EEPROM_LED
         elif comm_id == D_DEV_COMM['EEPROM_LED']:
-            # led_attached
-            self.put_queue_data('EEPROM_LED', self.unpack_rava_msgdata(comm_data, '?'))
+            # led_n
+            self.put_queue_data('EEPROM_LED', self.unpack_rava_msgdata(comm_data, 'B'))
 
         # EEPROM_LAMP
         elif comm_id == D_DEV_COMM['EEPROM_LAMP']:
-            exp_mag_smooth_n_trials, extra_n_bytes = self.unpack_rava_msgdata(comm_data, 'BB')
+            exp_mag_smooth_n_trials, exp_mag_colorchg_thld, sound_volume, extra_n_bytes = self.unpack_rava_msgdata(comm_data, 'BBBB')
             extra_bytes = self.read_serial(extra_n_bytes)
             if extra_bytes is None:
-                exp_dur_max_ms, exp_z_significant = None, None
+                exp_movwin_n_trials, exp_deltahits_sigevt, exp_dur_max_s = None, None, None
             else:
-                exp_dur_max_ms, exp_z_significant = struct.unpack('<Lf', extra_bytes)
-            self.put_queue_data('EEPROM_LAMP', (exp_dur_max_ms, exp_z_significant, exp_mag_smooth_n_trials))
+                exp_movwin_n_trials, exp_deltahits_sigevt, exp_dur_max_s = struct.unpack('<HHH', extra_bytes)
+            self.put_queue_data('EEPROM_LAMP', (exp_movwin_n_trials, exp_deltahits_sigevt, exp_dur_max_s, exp_mag_smooth_n_trials, exp_mag_colorchg_thld, sound_volume))
 
-        # PWM_SETUP
-        elif comm_id == D_DEV_COMM['PWM_SETUP']:
+        # PWM_BOOST_SETUP
+        elif comm_id == D_DEV_COMM['PWM_BOOST_SETUP']:
             # freq_id, duty
-            self.put_queue_data('PWM_SETUP', self.unpack_rava_msgdata(comm_data, 'BB'))
+            self.put_queue_data('PWM_BOOST_SETUP', self.unpack_rava_msgdata(comm_data, 'BB'))
 
         # RNG_SETUP
         elif comm_id == D_DEV_COMM['RNG_SETUP']:
@@ -844,12 +839,6 @@ class RAVA_RNG:
             return self.get_queue_data(comm, timeout=timeout)
 
 
-    def get_device_temperature(self, timeout=GET_TIMEOUT_S):
-        comm = 'DEVICE_TEMPERATURE'
-        if self.snd_rava_msg(comm):
-            return self.get_queue_data(comm, timeout=timeout)
-
-
     def get_device_free_ram(self, timeout=GET_TIMEOUT_S):
         comm = 'DEVICE_FREE_RAM'
         if self.snd_rava_msg(comm):
@@ -866,22 +855,6 @@ class RAVA_RNG:
     def snd_eeprom_reset_to_default(self):
         comm = 'EEPROM_RESET_TO_DEFAULT'
         return self.snd_rava_msg(comm)
-
-
-    def snd_eeprom_device(self, temp_calib_slope, temp_calib_intercept):
-        comm = 'EEPROM_DEVICE'
-        rava_send = False
-        data = [rava_send, temp_calib_slope, temp_calib_intercept]
-        return self.snd_rava_msg(comm, data, 'BHh')
-
-
-    def get_eeprom_device(self, timeout=GET_TIMEOUT_S):
-        comm = 'EEPROM_DEVICE'
-        rava_send = True
-        if self.snd_rava_msg(comm, [rava_send], 'B'):
-            data_vars = self.get_queue_data(comm, timeout=timeout)
-            data_names = ['temp_calib_slope', 'temp_calib_intercept']
-            return dict(zip(data_names, data_vars))
 
 
     def get_eeprom_firmware(self, timeout=GET_TIMEOUT_S):
@@ -906,25 +879,25 @@ class RAVA_RNG:
                     }
 
 
-    def snd_eeprom_pwm(self, freq_id, duty):
-        if freq_id not in D_PWM_FREQ_INV:
+    def snd_eeprom_pwm_boost(self, freq_id, duty):
+        if freq_id not in D_PWM_BOOST_FREQ_INV:
             self.lg.error('{} EEPROM PWM: Unknown freq_id {}'.format(self.dev_name, freq_id))
             return False
         if duty == 0:
             self.lg.error('{} EEPROM PWM: Provide a duty > 0'.format(self.dev_name))
             return False
 
-        comm = 'EEPROM_PWM'
+        comm = 'EEPROM_PWM_BOOST'
         rava_send = False
         return self.snd_rava_msg(comm, [rava_send, freq_id, duty], 'BBB')
 
 
-    def get_eeprom_pwm(self, timeout=GET_TIMEOUT_S):
-        comm = 'EEPROM_PWM'
+    def get_eeprom_pwm_boost(self, timeout=GET_TIMEOUT_S):
+        comm = 'EEPROM_PWM_BOOST'
         rava_send = True
         if self.snd_rava_msg(comm, [rava_send], 'B'):
             freq_id, duty = self.get_queue_data(comm, timeout=timeout)
-            return {'freq_id':freq_id, 'freq_str':D_PWM_FREQ_INV[freq_id], 'duty':duty}
+            return {'freq_id':freq_id, 'freq_str':D_PWM_BOOST_FREQ_INV[freq_id], 'duty':duty}
 
 
     def snd_eeprom_rng(self, sampling_interval_us):
@@ -945,35 +918,41 @@ class RAVA_RNG:
             return {'sampling_interval_us':sampling_interval_us}
 
 
-    def snd_eeprom_led(self, led_attached):
+    def snd_eeprom_led(self, led_n):
         comm = 'EEPROM_LED'
         rava_send = False
-        return self.snd_rava_msg(comm, [rava_send, bool(led_attached)], 'BB')
+        return self.snd_rava_msg(comm, [rava_send, led_n], 'BB')
 
 
     def get_eeprom_led(self, timeout=GET_TIMEOUT_S):
         comm = 'EEPROM_LED'
         rava_send = True
         if self.snd_rava_msg(comm, [rava_send], 'B'):
-            led_attached = self.get_queue_data(comm, timeout=timeout)
-            return {'led_attached':led_attached}
+            led_n = self.get_queue_data(comm, timeout=timeout)
+            return {'led_n':led_n}
 
 
-    def snd_eeprom_lamp(self, exp_dur_max_ms, exp_z_significant, exp_mag_smooth_n_trials):
-        if exp_dur_max_ms < 60000:
-            self.lg.error('{} EEPROM LAMP: Provide an exp_dur_max_ms >= 60000'.format(self.dev_name))
+    def snd_eeprom_lamp(self, exp_movwin_n_trials, exp_deltahits_sigevt, exp_dur_max_s, exp_mag_smooth_n_trials, exp_mag_colorchg_thld, sound_volume):
+        if (exp_movwin_n_trials < 10) or (exp_movwin_n_trials > 1200):
+            self.lg.error('{} EEPROM LAMP: Provide an 10 <= exp_movwin_n_trials <= 1200'.format(self.dev_name))
             return False
-        if exp_z_significant < 1.0:
-            self.lg.error('{} EEPROM LAMP: Provide an exp_z_significant >= 1.0'.format(self.dev_name))
+        if exp_deltahits_sigevt == 0:
+            self.lg.error('{} EEPROM LAMP: Provide an exp_deltahits_sigevt > 0'.format(self.dev_name))
             return False
-        if exp_mag_smooth_n_trials == 0:
-            self.lg.error('{} EEPROM LAMP: Provide an exp_mag_smooth_n_trials > 0'.format(self.dev_name))
+        if exp_dur_max_s < 10:
+            self.lg.error('{} EEPROM LAMP: Provide an exp_dur_max_s > 10'.format(self.dev_name))
+            return False
+        if (exp_mag_smooth_n_trials == 0) or (exp_mag_smooth_n_trials > 255):
+            self.lg.error('{} EEPROM LAMP: Provide an 0 < exp_mag_smooth_n_trials <= 255'.format(self.dev_name))
+            return False
+        if exp_mag_colorchg_thld > 255:
+            self.lg.error('{} EEPROM LAMP: Provide an exp_mag_colorchg_thld <= 255'.format(self.dev_name))
             return False
 
         comm = 'EEPROM_LAMP'
         rava_send = False
-        if self.snd_rava_msg(comm, [rava_send, exp_mag_smooth_n_trials, 8], 'BBB'):
-            comm_extra = struct.pack('<Lf', exp_dur_max_ms, exp_z_significant)
+        if self.snd_rava_msg(comm, [rava_send, exp_mag_smooth_n_trials, exp_mag_colorchg_thld, sound_volume, 6], 'BBBBB'):
+            comm_extra = struct.pack('<HHH', exp_movwin_n_trials, exp_deltahits_sigevt, exp_dur_max_s)
             return self.write_serial(comm_extra)
         else:
             return False
@@ -984,31 +963,31 @@ class RAVA_RNG:
         rava_send = True
         if self.snd_rava_msg(comm, [rava_send], 'B'):
             data_vars = self.get_queue_data(comm, timeout=timeout)
-            data_names = ['exp_dur_max_ms', 'exp_z_significant', 'exp_mag_smooth_n_trials']
+            data_names = ['exp_movwin_n_trials', 'exp_deltahits_sigevt', 'exp_dur_max_s', 'exp_mag_smooth_n_trials', 'exp_mag_colorchg_thld', 'sound_volume']
             return dict(zip(data_names, data_vars))
 
 
     ## PWM
 
-    def snd_pwm_setup(self, freq_id, duty):
-        if freq_id not in D_PWM_FREQ_INV:
+    def snd_pwm_boost_setup(self, freq_id, duty):
+        if freq_id not in D_PWM_BOOST_FREQ_INV:
             self.lg.error('{} PWM: Unknown freq_id {}'.format(self.dev_name, freq_id))
             return False
         if duty == 0:
             self.lg.error('{} PWM: Provide a duty > 0'.format(self.dev_name))
             return False
 
-        comm = 'PWM_SETUP'
+        comm = 'PWM_BOOST_SETUP'
         rava_send = False
         return self.snd_rava_msg(comm, [rava_send, freq_id, duty], 'BBB')
 
 
-    def get_pwm_setup(self, timeout=GET_TIMEOUT_S):
+    def get_pwm_boost_setup(self, timeout=GET_TIMEOUT_S):
         rava_send = True
-        comm = 'PWM_SETUP'
+        comm = 'PWM_BOOST_SETUP'
         if self.snd_rava_msg(comm, [rava_send], 'B'):
             freq_id, duty = self.get_queue_data(comm, timeout=timeout)
-            return {'freq_id':freq_id, 'freq_str':D_PWM_FREQ_INV[freq_id], 'duty':duty}
+            return {'freq_id':freq_id, 'freq_str':D_PWM_BOOST_FREQ_INV[freq_id], 'duty':duty}
 
 
     ## RNG
@@ -1380,8 +1359,7 @@ class RAVA_RNG:
         return self.snd_rava_msg(comm, [on, interval_ms], 'BH')
 
 
-    def snd_periph_d3_timer3_pwm(self, freq_prescaler=1, top=2**8-1, duty=10,
-                                 on=True):
+    def snd_periph_d3_timer3_pwm(self, freq_prescaler=1, top=2**8-1, duty=10, on=True):
         if freq_prescaler == 0 or freq_prescaler > 5:
             self.lg.error('{} Periph D3: Provide a freq_prescaler between 1 and 5'.format(self.dev_name))
             return None
@@ -1394,6 +1372,11 @@ class RAVA_RNG:
 
         comm = 'PERIPH_D3_TIMER3_PWM'
         return self.snd_rava_msg(comm, [on, freq_prescaler, top, duty], 'BBHH')
+
+
+    def snd_periph_d3_timer3_sound(self, freq_hz=440, volume=255, on=True):
+        comm = 'PERIPH_D3_TIMER3_SOUND'
+        return self.snd_rava_msg(comm, [on, freq_hz, volume], 'BHB')
 
 
     def snd_periph_d4_pin_change(self, on=True):

@@ -395,7 +395,7 @@ class RAVA_SUBAPP_ACQUISITION(RAVA_SUBAPP):
         pcs_b = np.zeros(shape=(n_si_range, n_pcs), dtype=np.uint8)
 
         # Save initial RAVA setup
-        pwm_setup = self.rng.get_pwm_setup()
+        pwm_setup = self.rng.get_pwm_boost_setup()
         rng_setup = self.rng.get_rng_setup()
 
         # Show progress window

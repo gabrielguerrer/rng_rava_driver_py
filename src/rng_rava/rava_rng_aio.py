@@ -12,6 +12,7 @@ asynchronous framework.
 import asyncio
 import numpy as np
 
+from rng_rava import __version__ as rng_rava_version
 from rng_rava import RAVA_RNG
 from rng_rava import find_rava_port, version_a_greater_b, print_health_startup_results, bytes_to_list, bytes_to_array
 from rng_rava.rava_defs import *
@@ -63,14 +64,17 @@ class RAVA_RNG_AIO(RAVA_RNG):
 
         # Check Firmware version
         if version_a_greater_b(FIRMWARE_MIN_VERSION, self.firmware_version):
-            self.lg.error('{} Connect: Firmware version v{} is incompatible with the driver'.format(self.dev_name, self.firmware_version))
+            self.lg.error('{} Connect: Firmware version v{} is incompatible with driver v{}'.format(self.dev_name, self.firmware_version, rng_rava_version))
+            self.close()
             return False
 
         # Print connection info
         self.lg.info('{} Connect: Success'
-                '\n{}  {}, Firmware v{}, SN={}, at {}'
-                .format(self.dev_name, LOG_FILL,
-                        self.dev_usb_name, self.firmware_version, self.dev_serial_number, self.serial.port))
+                '\n{}  SN={} at {}'
+                '\n{}  Firmware v{},  Driver v{}'
+                .format(self.dev_name,
+                        LOG_FILL, self.dev_serial_number, self.serial.port,
+                        LOG_FILL, self.firmware_version, rng_rava_version))
 
         # Request Health startup info
         if self.health_startup_enabled:
@@ -208,27 +212,13 @@ class RAVA_RNG_AIO(RAVA_RNG):
             return await self.get_queue_data(comm)
 
 
-    async def get_device_temperature(self):
-        comm = 'DEVICE_TEMPERATURE'
-        if self.snd_rava_msg(comm):
-            return await self.get_queue_data(comm)
-
-
+    async def get_device_free_ram(self):
         comm = 'DEVICE_FREE_RAM'
         if self.snd_rava_msg(comm):
             return await self.get_queue_data(comm)
 
 
     ## EEPROM
-
-    async def get_eeprom_device(self):
-        comm = 'EEPROM_DEVICE'
-        rava_send = True
-        if self.snd_rava_msg(comm, [rava_send], 'B'):
-            data_vars = await self.get_queue_data(comm)
-            data_names = ['temp_calib_slope', 'temp_calib_intercept']
-            return dict(zip(data_names, data_vars))
-
 
     async def get_eeprom_firmware(self):
         comm = 'EEPROM_FIRMWARE'
@@ -252,12 +242,12 @@ class RAVA_RNG_AIO(RAVA_RNG):
                     }
 
 
-    async def get_eeprom_pwm(self):
-        comm = 'EEPROM_PWM'
+    async def get_eeprom_pwm_boost(self):
+        comm = 'EEPROM_PWM_BOOST'
         rava_send = True
         if self.snd_rava_msg(comm, [rava_send], 'B'):
             freq_id, duty = await self.get_queue_data(comm)
-            return {'freq_id':freq_id, 'freq_str':D_PWM_FREQ_INV[freq_id], 'duty':duty}
+            return {'freq_id':freq_id, 'freq_str':D_PWM_BOOST_FREQ_INV[freq_id], 'duty':duty}
 
 
     async def get_eeprom_rng(self):
@@ -272,8 +262,8 @@ class RAVA_RNG_AIO(RAVA_RNG):
         comm = 'EEPROM_LED'
         rava_send = True
         if self.snd_rava_msg(comm, [rava_send], 'B'):
-            led_attached = await self.get_queue_data(comm)
-            return {'led_attached':led_attached}
+            led_n = await self.get_queue_data(comm)
+            return {'led_n':led_n}
 
 
     async def get_eeprom_lamp(self):
@@ -281,18 +271,18 @@ class RAVA_RNG_AIO(RAVA_RNG):
         rava_send = True
         if self.snd_rava_msg(comm, [rava_send], 'B'):
             data_vars = await self.get_queue_data(comm)
-            data_names = ['exp_dur_max_ms', 'exp_z_significant', 'exp_mag_smooth_n_trials']
+            data_names = ['exp_movwin_n_trials', 'exp_deltahits_sigevt', 'exp_dur_max_s', 'exp_mag_smooth_n_trials', 'exp_mag_colorchg_thld', 'sound_volume']
             return dict(zip(data_names, data_vars))
 
 
     ## PWM
 
-    async def get_pwm_setup(self):
+    async def get_pwm_boost_setup(self):
         rava_send = True
-        comm = 'PWM_SETUP'
+        comm = 'PWM_BOOST_SETUP'
         if self.snd_rava_msg(comm, [rava_send], 'B'):
             freq_id, duty = await self.get_queue_data(comm)
-            return {'freq_id':freq_id, 'freq_str':D_PWM_FREQ_INV[freq_id], 'duty':duty}
+            return {'freq_id':freq_id, 'freq_str':D_PWM_BOOST_FREQ_INV[freq_id], 'duty':duty}
 
 
     ## RNG

@@ -1,5 +1,5 @@
 '''
-This example illustrates the generation of pulse counts to memory array using
+This example illustrates the generation of pulse counts to memory array using 
 the RAVA_ACQUISITION class. The generation runs in threaded mode.
 
 This example code is in the public domain.
@@ -37,7 +37,7 @@ def finished(future):
     # Print first 100 entries from each array
     print(outputs[0][:100])
     print(outputs[1][:100])
-
+    
     # Close RAVA device
     rng.close()
 

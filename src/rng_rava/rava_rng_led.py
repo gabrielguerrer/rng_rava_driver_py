@@ -27,11 +27,11 @@ class RAVA_RNG_LED(RAVA_RNG):
         super().__init__(dev_name='RAVA_LED')
 
         # Variables defined upon connection
-        self.led_attached = None
+        self.led_n = None
 
         # Variables
-        self.led_color = None
-        self.led_intensity = None
+        self.led_color = 0
+        self.led_intensity = 0
         self.lamp_mode = None
         self.lamp_debug = None
 
@@ -48,10 +48,10 @@ class RAVA_RNG_LED(RAVA_RNG):
             self.lg.warning('{} Connect: LED code is disabled in the firmware'.format(self.dev_name))
 
         # LED attached?
-        self.led_attached = self.get_eeprom_led()['led_attached']
-        if not self.led_attached:
+        self.led_n = self.get_eeprom_led()['led_n']
+        if not self.led_n:
             self.lg.warning('{} Connect: Firmware claims no LED is attached.'
-                           '\n{}  If false, fix it with snd_eeprom_led(led_attached=True)'
+                           '\n{}  If false, fix it with snd_eeprom_led(led_n=N_LEDS)'
                            .format(self.dev_name, LOG_FILL))
 
         return True
@@ -69,8 +69,11 @@ class RAVA_RNG_LED(RAVA_RNG):
 
         # LAMP_DEBUG
         elif comm_id == D_DEV_COMM['LAMP_DEBUG']:
-            # z, mag, mag_avg
-            self.put_queue_data('LAMP_DEBUG', self.unpack_rava_msgdata(comm_data, 'fBB'))
+            z_score, mag_avg, n_extra_bytes = self.unpack_rava_msgdata(comm_data, 'fBB')
+            extra_bytes = self.read_serial(n_extra_bytes)
+            delta_hits, trial_i = struct.unpack('<hL', extra_bytes)
+            self.put_queue_data('LAMP_DEBUG', (z_score, delta_hits, mag_avg, trial_i))
+
             # Callback
             try:
                 self.cbkfcn_lamp_debug()
@@ -80,11 +83,11 @@ class RAVA_RNG_LED(RAVA_RNG):
         # LAMP_STATISTICS
         elif comm_id == D_DEV_COMM['LAMP_STATISTICS']:
             exp_n, exp_n_zsig, n_extra_bytes = self.unpack_rava_msgdata(comm_data, 'HHB')
-            exp_colors_bytes = self.read_serial(n_extra_bytes)
-            if exp_colors_bytes is None:
+            extra_bytes = self.read_serial(n_extra_bytes)
+            if extra_bytes is None:
                 exp_colors = 8*[0]
             else:
-                exp_colors = struct.unpack('<HHHHHHHH', exp_colors_bytes)
+                exp_colors = struct.unpack('<HHHHHHHH', extra_bytes)
             self.put_queue_data('LAMP_STATISTICS', (exp_n, exp_n_zsig, *exp_colors))
 
 
@@ -216,8 +219,7 @@ class RAVA_RNG_LED(RAVA_RNG):
         comm = 'LAMP_STATISTICS'
         if self.snd_rava_msg(comm):
             data_vars = self.get_queue_data(comm, timeout=timeout)
-            data_names = ['exp_n', 'exp_n_zsig',
-                          'red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'pink']
+            data_names = ['exp_n', 'exp_n_zsig', 'red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'pink']
             return dict(zip(data_names, data_vars))
 
 
@@ -235,5 +237,5 @@ class RAVA_RNG_LED(RAVA_RNG):
         if data_vars is None:
             return None
 
-        data_names = ['z', 'mag', 'mag_avg']
+        data_names = ['z_score', 'delta_hits', 'mag_avg', 'trial_i']
         return dict(zip(data_names, data_vars))

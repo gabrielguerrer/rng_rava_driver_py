@@ -22,7 +22,7 @@ async def main():
         exit()
 
     # Request configuration
-    print('\nPWM setup: {}\n'.format(await rng.get_pwm_setup()))
+    print('\nPWM setup: {}\n'.format(await rng.get_pwm_boost_setup()))
     print('\nRNG setup: {}\n'.format(await rng.get_rng_setup()))
 
     # Generate random data

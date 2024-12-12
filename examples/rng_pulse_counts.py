@@ -17,8 +17,8 @@ else:
     print('No device found')
     exit()
 
-# Config PWM
-rng.snd_pwm_setup(freq_id=rava.D_PWM_FREQ['50_KHZ'], duty=20)
+# Config PWM BOOST
+rng.snd_pwm_boost_setup(freq_id=rava.D_PWM_BOOST_FREQ['50_KHZ'], duty=20)
 
 # Get initial sampling interval
 si0 = rng.get_rng_setup()
